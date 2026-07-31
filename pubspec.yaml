@@ -1,0 +1,61 @@
+name: al_daa_wal_dawaa
+description: تطبيق الداء والدواء - الشيخ عبدالرزاق البدر
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # الصوت
+  just_audio: ^0.9.40
+  audio_service: ^0.18.15
+
+  # إدارة الحالة
+  flutter_riverpod: ^2.5.1
+
+  # قاعدة البيانات المحلية
+  sqflite: ^2.3.3
+  sqflite_common_ffi: ^2.3.4
+  sqflite_common_ffi_web: ^0.4.5+4
+  path: ^1.9.0
+
+  # المسارات والتحميل
+  path_provider: ^2.1.4
+  flutter_cache_manager: ^3.4.1
+  url_launcher: ^6.3.1
+
+  # التنقل
+  go_router: ^14.3.0
+
+  # واجهة المستخدم
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0a3d2e"
+  adaptive_icon_foreground: "assets/images/app_icon_padded.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/lessons.json
+    - assets/data/version.json
+    - assets/images/cover.png
+    - assets/images/app_icon.png
+    - assets/images/app_icon_padded.png
