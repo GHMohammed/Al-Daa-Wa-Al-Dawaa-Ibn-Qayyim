@@ -222,12 +222,6 @@ flutter build apk --release
 
 ---
 
-## 📄 License | الترخيص
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👨‍💻 Developer | المطور
 
 <div dir="rtl">
