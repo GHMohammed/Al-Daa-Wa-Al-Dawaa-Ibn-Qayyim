@@ -39,6 +39,22 @@ void main() {
     expect(state.all.first.text, 'تعريف الدعاء');
   });
 
+  test('voice notes are notes with an audio path and no text', () {
+    final voice = AnnotationItem.note(
+      NoteModel(
+        lessonId: 3,
+        position: 30,
+        audioPath: '/notes/a.m4a',
+        createdAt: t0,
+        updatedAt: t0,
+      ),
+    );
+    expect(voice.isNote, isTrue);
+    expect(voice.isVoice, isTrue);
+    expect(voice.text, isNull);
+    expect(state.forLesson(3).any((i) => i.isVoice), isFalse);
+  });
+
   test('bookmark json round-trip keeps label and omits null id', () {
     final b = BookmarkModel(lessonId: 1, position: 10, createdAt: t0);
     expect(b.toJson().containsKey('id'), isFalse);

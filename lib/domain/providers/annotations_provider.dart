@@ -11,6 +11,7 @@ class AnnotationItem {
   final NoteModel? note;
 
   bool get isNote => note != null;
+  bool get isVoice => note?.audioPath != null;
   int get lessonId => bookmark?.lessonId ?? note!.lessonId;
   int get position => bookmark?.position ?? note!.position;
   DateTime get createdAt => bookmark?.createdAt ?? note!.createdAt;
@@ -111,6 +112,27 @@ class AnnotationsNotifier extends StateNotifier<AnnotationsState> {
         lessonId: lessonId,
         position: position.inSeconds,
         text: text.trim(),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    state = AnnotationsState(
+      bookmarks: state.bookmarks,
+      notes: [saved, ...state.notes],
+    );
+  }
+
+  Future<void> addVoiceNote(
+    int lessonId,
+    Duration position,
+    String audioPath,
+  ) async {
+    final now = DateTime.now();
+    final saved = await _db.insertNote(
+      NoteModel(
+        lessonId: lessonId,
+        position: position.inSeconds,
+        audioPath: audioPath,
         createdAt: now,
         updatedAt: now,
       ),

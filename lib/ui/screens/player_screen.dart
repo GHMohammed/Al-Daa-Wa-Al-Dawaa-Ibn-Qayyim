@@ -6,6 +6,7 @@ import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/voice_recorder_sheet.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -310,6 +311,16 @@ class _ToolsRow extends ConsumerWidget {
           icon: Icons.edit_note_rounded,
           label: 'ملاحظة',
           onTap: () => showNoteEditor(
+            context,
+            ref,
+            lessonId: lessonId,
+            position: position,
+          ),
+        ),
+        _ToolChip(
+          icon: Icons.mic_none_rounded,
+          label: 'تسجيل',
+          onTap: () => showVoiceRecorder(
             context,
             ref,
             lessonId: lessonId,
