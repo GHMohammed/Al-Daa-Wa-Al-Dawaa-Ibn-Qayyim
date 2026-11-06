@@ -70,13 +70,7 @@ class DownloadButton extends ConsumerWidget {
 
   Future<void> _startDownload(BuildContext context, WidgetRef ref) async {
     try {
-      await ref.read(downloadStatusProvider.notifier).downloadLesson(
-            lesson,
-            (p) {
-              ref.read(downloadProgressProvider(lesson.id).notifier).state = p;
-            },
-          );
-      ref.invalidate(storageUsedProvider);
+      await ref.read(downloadStatusProvider.notifier).downloadLesson(lesson);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم حفظ الدرس للاستماع بدون إنترنت')),

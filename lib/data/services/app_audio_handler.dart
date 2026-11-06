@@ -103,6 +103,29 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     await seek(target.isNegative ? Duration.zero : target);
   }
 
+  /// أزرار التالي/السابق من الإشعار — يعيّنها PlayerNotifier لأن قائمة الدروس عنده
+  Future<void> Function()? onSkipToNext;
+  Future<void> Function()? onSkipToPrevious;
+
+  @override
+  Future<void> skipToNext() async => onSkipToNext?.call();
+
+  @override
+  Future<void> skipToPrevious() async => onSkipToPrevious?.call();
+
+  @override
+  Future<void> fastForward() => skipForward30();
+
+  @override
+  Future<void> rewind() => skipBackward30();
+
+  /// يوقف المشغّل فعلياً ثم يُعلم audio_service لإنهاء الخدمة والإشعار
+  @override
+  Future<void> stop() async {
+    await _player.stop();
+    await super.stop();
+  }
+
   Future<void> stopPlayer() async {
     await _player.stop();
     _currentLesson = null;
