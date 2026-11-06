@@ -1,7 +1,9 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/models/annotation_model.dart';
+import 'package:al_daa_wal_dawaa/data/local/voice_note_storage.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/voice_note_player_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -143,18 +145,28 @@ Future<void> deleteAnnotationWithUndo(
 ) async {
   final messenger = ScaffoldMessenger.of(context);
   final notifier = ref.read(annotationsProvider.notifier);
+  final audioPath = item.note?.audioPath;
+  if (audioPath != null &&
+      ref.read(voiceNotePlayerProvider).isActive(audioPath)) {
+    await ref.read(voiceNotePlayerProvider.notifier).stop();
+  }
   final removed = await notifier.remove(item);
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(item.isNote ? 'حُذفت الملاحظة' : 'حُذفت العلامة'),
-        action: SnackBarAction(
-          label: 'تراجع',
-          onPressed: () => notifier.restore(removed),
+  messenger.hideCurrentSnackBar();
+  final closed = messenger
+      .showSnackBar(
+        SnackBar(
+          content: Text(item.isNote ? 'حُذفت الملاحظة' : 'حُذفت العلامة'),
+          action: SnackBarAction(
+            label: 'تراجع',
+            onPressed: () => notifier.restore(removed),
+          ),
         ),
-      ),
-    );
+      )
+      .closed;
+  // ملف الملاحظة الصوتية يبقى حتى تنتهي فرصة التراجع
+  if (audioPath != null && await closed != SnackBarClosedReason.action) {
+    await VoiceNoteStorage.delete(audioPath);
+  }
 }
 
 /// صف علامة أو ملاحظة — يُستخدم في قائمة المشغّل وشاشة «علاماتي»
@@ -201,7 +213,11 @@ class AnnotationTile extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                item.isNote ? Icons.edit_note_rounded : Icons.bookmark_rounded,
+                item.isVoice
+                    ? Icons.mic_rounded
+                    : item.isNote
+                        ? Icons.edit_note_rounded
+                        : Icons.bookmark_rounded,
                 size: 19,
                 color: item.isNote ? colors.onAccentContainer : colors.gold,
               ),
@@ -218,18 +234,21 @@ class AnnotationTile extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: text.labelSmall?.copyWith(color: colors.textMuted),
                     ),
-                  Text(
-                    body?.isNotEmpty == true
-                        ? body!
-                        : (item.isNote ? 'ملاحظة' : 'علامة بلا عنوان'),
-                    maxLines: item.isNote ? 3 : 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium?.copyWith(
-                      color: body?.isNotEmpty == true
-                          ? null
-                          : colors.textSecondary,
+                  if (item.isVoice)
+                    _VoiceNotePlayback(path: item.note!.audioPath!)
+                  else
+                    Text(
+                      body?.isNotEmpty == true
+                          ? body!
+                          : (item.isNote ? 'ملاحظة' : 'علامة بلا عنوان'),
+                      maxLines: item.isNote ? 3 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodyMedium?.copyWith(
+                        color: body?.isNotEmpty == true
+                            ? null
+                            : colors.textSecondary,
+                      ),
                     ),
-                  ),
                   Text(
                     when,
                     style: text.labelMedium?.copyWith(
@@ -258,16 +277,80 @@ class AnnotationTile extends ConsumerWidget {
                 }
               },
               itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'edit',
-                  child: Text(item.isNote ? 'تعديل' : 'تسمية'),
-                ),
+                if (!item.isVoice)
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Text(item.isNote ? 'تعديل' : 'تسمية'),
+                  ),
                 const PopupMenuItem(value: 'delete', child: Text('حذف')),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// زر تشغيل الملاحظة الصوتية مع شريط تقدمها ومدتها
+class _VoiceNotePlayback extends ConsumerWidget {
+  const _VoiceNotePlayback({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final playback = ref.watch(voiceNotePlayerProvider);
+    final active = playback.isActive(path);
+    final playing = active && playback.playing;
+    final fraction = active && playback.duration.inMilliseconds > 0
+        ? playback.position.inMilliseconds / playback.duration.inMilliseconds
+        : 0.0;
+
+    return Row(
+      children: [
+        Material(
+          color: colors.brand,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () =>
+                ref.read(voiceNotePlayerProvider.notifier).toggle(path),
+            child: SizedBox.square(
+              dimension: 32,
+              child: Icon(
+                playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                size: 20,
+                color: Colors.white,
+                semanticLabel: playing ? 'إيقاف مؤقت' : 'استمع للملاحظة',
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: fraction.clamp(0.0, 1.0),
+              minHeight: 3,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          active
+              ? AppConstants.formatDuration(
+                  playing ? playback.position : playback.duration,
+                )
+              : 'ملاحظة صوتية',
+          style: Theme.of(context)
+              .textTheme
+              .labelMedium
+              ?.copyWith(color: colors.textSecondary),
+        ),
+      ],
     );
   }
 }
