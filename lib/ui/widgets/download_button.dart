@@ -1,4 +1,5 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
+import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/local/download_manager.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
@@ -23,12 +24,13 @@ class DownloadButton extends ConsumerWidget {
     final progress = ref.watch(downloadProgressProvider(lesson.id));
 
     if (status == DownloadStatus.downloaded) {
+      final colors = context.colors;
       return compact
-          ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+          ? Icon(Icons.check_circle, color: colors.success, size: 20)
           : Chip(
               label: const Text('محفوظ'),
-              backgroundColor: Colors.green.shade100,
-              labelStyle: const TextStyle(color: Colors.green, fontSize: 12),
+              backgroundColor: colors.successContainer,
+              labelStyle: TextStyle(color: colors.success, fontSize: 12),
               visualDensity: VisualDensity.compact,
             );
     }

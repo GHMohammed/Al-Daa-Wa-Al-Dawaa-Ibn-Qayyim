@@ -77,6 +77,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       );
     }
 
+    final colors = context.colors;
     final duration = player.duration.inSeconds > 0
         ? player.duration
         : Duration(seconds: lesson.duration);
@@ -111,26 +112,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 width: 200,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1D9E75).withValues(alpha: 0.15),
+                  color: colors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF1D9E75).withValues(alpha: 0.3),
+                    color: colors.accent.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.menu_book_rounded,
                       size: 72,
-                      color: Color(0xFF1D9E75),
+                      color: colors.accent,
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Text(
                       'الداء والدواء',
                       style: TextStyle(
-                        color: Color(0xFF0F6E56),
+                        color: colors.onAccentContainer,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -150,7 +151,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               const SizedBox(height: 16),
               Text(
                 AppConstants.sheikhName,
-                style: TextStyle(color: Colors.grey.shade600),
+                style: TextStyle(color: colors.textMuted),
               ),
               const SizedBox(height: 16),
               // شريط التقديم
@@ -209,13 +210,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           ref.read(playerProvider.notifier).togglePlayPause(),
                       child: CircleAvatar(
                         radius: 32,
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: colors.brand,
                         child: Icon(
                           player.status == PlayerStatus.playing
                               ? Icons.pause
                               : Icons.play_arrow,
                           size: 40,
-                          color: Colors.white,
+                          color: colors.onHeader,
                         ),
                       ),
                     ),
@@ -247,7 +248,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   padding: const EdgeInsets.only(top: 16),
                   child: Text(
                     player.errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: colors.danger),
                     textAlign: TextAlign.center,
                   ),
                 ),

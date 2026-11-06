@@ -34,12 +34,12 @@ dependencies:
 
   # واجهة المستخدم
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.3.4
   flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
@@ -58,3 +58,18 @@ flutter:
     - assets/images/cover.png
     - assets/images/app_icon.png
     - assets/images/app_icon_padded.png
+
+  # خط ثمانية — الملفات غير مرفوعة على git بسبب الترخيص، انظر docs/fonts.md
+  fonts:
+    - family: Thmanyah Sans
+      fonts:
+        - asset: assets/fonts/thmanyah-sans-Light.otf
+          weight: 300
+        - asset: assets/fonts/thmanyah-sans-Regular.otf
+          weight: 400
+        - asset: assets/fonts/thmanyah-sans-Medium.otf
+          weight: 500
+        - asset: assets/fonts/thmanyah-sans-Bold.otf
+          weight: 700
+        - asset: assets/fonts/thmanyah-sans-Black.otf
+          weight: 900

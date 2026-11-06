@@ -24,10 +24,13 @@ class AppConstants {
   static const List<double> playbackSpeeds = [0.75, 1.0, 1.25, 1.5, 2.0];
 
   static const String dbName = 'al_daa_wal_dawaa.db';
-  static const int dbVersion = 1;
+  /// v1: progress, downloads — v2: bookmarks, notes
+  static const int dbVersion = 2;
 
   static const String tableProgress = 'progress';
   static const String tableDownloads = 'downloads';
+  static const String tableBookmarks = 'bookmarks';
+  static const String tableNotes = 'notes';
 
   static const String androidNotificationChannelId =
       'com.example.al_daa_wal_dawaa.audio';

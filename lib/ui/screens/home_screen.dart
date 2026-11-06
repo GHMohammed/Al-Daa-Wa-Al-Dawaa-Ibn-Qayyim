@@ -79,8 +79,9 @@ class _Header extends StatelessWidget {
     // Container خارجي بدون borderRadius يمتد خلف الـ status bar بالكامل
     // SafeArea(bottom: false) يدفع المحتوى أسفل الـ status bar
     // Container داخلي يرسم الزوايا الدائرية في الأسفل فقط
+    final colors = context.colors;
     return Container(
-      color: AppColors.primary,
+      color: colors.header,
       child: SafeArea(
         bottom: false,
         child: Container(
@@ -91,9 +92,9 @@ class _Header extends StatelessWidget {
             left: 20,
             right: 20,
           ),
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: colors.header,
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(24),
               bottomRight: Radius.circular(24),
             ),
@@ -104,14 +105,14 @@ class _Header extends StatelessWidget {
               Text(
                 AppConstants.appTitle,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
+                      color: colors.onHeader,
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 4),
               Text(
                 AppConstants.sheikhName,
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
+                style: TextStyle(color: colors.onHeaderMuted, fontSize: 14),
               ),
               const SizedBox(height: 16),
               ClipRRect(
@@ -119,8 +120,8 @@ class _Header extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress.clamp(0, 1),
                   minHeight: 6,
-                  backgroundColor: Colors.white24,
-                  color: AppColors.secondary,
+                  backgroundColor: colors.onHeaderTrack,
+                  color: colors.accent,
                 ),
               ),
               const SizedBox(height: 8),
@@ -129,11 +130,11 @@ class _Header extends StatelessWidget {
                 children: [
                   Text(
                     'إنجاز الكتاب $percent%',
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(color: colors.onHeader, fontSize: 13),
                   ),
                   Text(
                     '$completed من $total درس',
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: TextStyle(color: colors.onHeader, fontSize: 13),
                   ),
                 ],
               ),

@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# خط ثمانية — ترخيصه يمنع رفع ملفات الخط على أي خادم أو منصة (والمستودع عام).
+# حمّل الخط من https://font.thmanyah.com وضع ملفات TTF هنا (انظر docs/fonts.md)
+/assets/fonts/
