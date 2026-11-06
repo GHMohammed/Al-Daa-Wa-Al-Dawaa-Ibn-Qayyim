@@ -60,24 +60,27 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
     Duration? startPosition,
   }) async {
     _currentLesson = lesson;
-    mediaItem.add(
-      MediaItem(
-        id: lesson.id.toString(),
-        title: lesson.title,
-        artist: AppConstants.sheikhName,
-        duration: Duration(seconds: lesson.duration),
-        artUri: Uri.parse('asset:///${AppConstants.coverImagePath}'),
-      ),
+    final item = MediaItem(
+      id: lesson.id.toString(),
+      title: lesson.title,
+      artist: AppConstants.sheikhName,
+      duration: Duration(seconds: lesson.duration),
+      artUri: Uri.parse('asset:///${AppConstants.coverImagePath}'),
     );
+    mediaItem.add(item);
 
     final source = uri.startsWith('http')
         ? AudioSource.uri(Uri.parse(uri))
         : AudioSource.file(uri);
 
-    await _player.setAudioSource(
+    final realDuration = await _player.setAudioSource(
       source,
       initialPosition: startPosition ?? Duration.zero,
     );
+    // مدة JSON تقديرية — نستبدلها بالمدة الحقيقية في الإشعار حين تُعرف
+    if (realDuration != null) {
+      mediaItem.add(item.copyWith(duration: realDuration));
+    }
   }
 
   @override

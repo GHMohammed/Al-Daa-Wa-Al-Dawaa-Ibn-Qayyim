@@ -121,11 +121,4 @@ class DatabaseHelper {
         row['lesson_id'] as int: row['local_path'] as String,
     };
   }
-
-  /// مجموع ساعات الاستماع (من المواضع المحفوظة للدروس المكتملة وجزئياً)
-  Future<double> getTotalListeningHours() async {
-    final all = await getAllProgress();
-    final totalSeconds = all.fold<int>(0, (sum, p) => sum + p.position);
-    return totalSeconds / 3600.0;
-  }
 }
