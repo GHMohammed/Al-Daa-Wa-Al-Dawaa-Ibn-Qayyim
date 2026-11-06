@@ -1,4 +1,5 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
+import 'package:al_daa_wal_dawaa/data/models/annotation_model.dart';
 import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:path/path.dart';
@@ -169,5 +170,78 @@ class DatabaseHelper {
       for (final row in rows)
         row['lesson_id'] as int: row['local_path'] as String,
     };
+  }
+
+  // ── العلامات المرجعية ────────────────────────────────────────────
+
+  Future<List<BookmarkModel>> getAllBookmarks() async {
+    final db = await database;
+    final rows = await db.query(
+      AppConstants.tableBookmarks,
+      orderBy: 'created_at DESC',
+    );
+    return rows.map(BookmarkModel.fromJson).toList();
+  }
+
+  /// يُعيد العلامة مع المعرّف الذي أنشأته القاعدة
+  Future<BookmarkModel> insertBookmark(BookmarkModel bookmark) async {
+    final db = await database;
+    final id = await db.insert(AppConstants.tableBookmarks, bookmark.toJson());
+    return bookmark.copyWith(id: id);
+  }
+
+  Future<void> updateBookmarkLabel(int id, String? label) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableBookmarks,
+      {'label': label},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteBookmark(int id) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.tableBookmarks,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ── الملاحظات ─────────────────────────────────────────────────────
+
+  Future<List<NoteModel>> getAllNotes() async {
+    final db = await database;
+    final rows = await db.query(
+      AppConstants.tableNotes,
+      orderBy: 'created_at DESC',
+    );
+    return rows.map(NoteModel.fromJson).toList();
+  }
+
+  Future<NoteModel> insertNote(NoteModel note) async {
+    final db = await database;
+    final id = await db.insert(AppConstants.tableNotes, note.toJson());
+    return note.copyWith(id: id);
+  }
+
+  Future<void> updateNoteText(int id, String text, DateTime updatedAt) async {
+    final db = await database;
+    await db.update(
+      AppConstants.tableNotes,
+      {'text': text, 'updated_at': updatedAt.toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteNote(int id) async {
+    final db = await database;
+    await db.delete(
+      AppConstants.tableNotes,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }

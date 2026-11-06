@@ -148,7 +148,7 @@ class ProgressScreen extends ConsumerWidget {
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 1),
+        bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       ),
     );
   }

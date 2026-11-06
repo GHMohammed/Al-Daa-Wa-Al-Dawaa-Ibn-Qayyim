@@ -34,6 +34,7 @@ dependencies:
 
   # واجهة المستخدم
   cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.6
 
 dev_dependencies:
   flutter_test:
