@@ -16,8 +16,9 @@ class ProgressScreen extends ConsumerWidget {
     final overall = ref.watch(overallProgressProvider);
     final completed = ref.watch(completedCountProvider);
     final downloaded = ref.watch(downloadedCountProvider);
-    final hoursAsync = ref.watch(totalHoursProvider);
-    final recentAsync = ref.watch(recentProgressProvider);
+    final hours = ref.watch(totalHoursProvider);
+    final recent = ref.watch(recentProgressProvider);
+    final last = recent.isNotEmpty ? recent.first : null;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -63,50 +64,22 @@ class ProgressScreen extends ConsumerWidget {
                     value: '$completed / ${AppConstants.totalLessons}',
                     icon: Icons.check_circle_outline,
                   ),
-                  hoursAsync.when(
-                    data: (h) => _StatCard(
-                      title: 'ساعات الاستماع',
-                      value: h.toStringAsFixed(1),
-                      icon: Icons.headphones,
-                    ),
-                    loading: () => const _StatCard(
-                      title: 'ساعات الاستماع',
-                      value: '...',
-                      icon: Icons.headphones,
-                    ),
-                    error: (_, __) => const _StatCard(
-                      title: 'ساعات الاستماع',
-                      value: '—',
-                      icon: Icons.headphones,
-                    ),
+                  _StatCard(
+                    title: 'ساعات الاستماع',
+                    value: hours.toStringAsFixed(1),
+                    icon: Icons.headphones,
                   ),
                   _StatCard(
                     title: 'الدروس المحمّلة',
                     value: '$downloaded',
                     icon: Icons.download_done,
                   ),
-                  recentAsync.when(
-                    data: (list) {
-                      final last = list.isNotEmpty ? list.first : null;
-                      final text = last != null
-                          ? AppConstants.formatSeconds(last.position)
-                          : '—';
-                      return _StatCard(
-                        title: 'آخر جلسة',
-                        value: text,
-                        icon: Icons.history,
-                      );
-                    },
-                    loading: () => const _StatCard(
-                      title: 'آخر جلسة',
-                      value: '...',
-                      icon: Icons.history,
-                    ),
-                    error: (_, __) => const _StatCard(
-                      title: 'آخر جلسة',
-                      value: '—',
-                      icon: Icons.history,
-                    ),
+                  _StatCard(
+                    title: 'آخر جلسة',
+                    value: last != null
+                        ? AppConstants.formatSeconds(last.position)
+                        : '—',
+                    icon: Icons.history,
                   ),
                 ],
               ),
@@ -125,25 +98,14 @@ class ProgressScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            recentAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(),
-              ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('تعذّر تحميل السجل: $e'),
-              ),
-              data: (progressList) {
-                final lessonsAsync = ref.watch(lessonsProvider);
-                return lessonsAsync.when(
+            ref.watch(lessonsProvider).when(
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                   data: (lessons) {
                     final lessonMap = {
                       for (final l in lessons) l.lesson.id: l.lesson.title,
                     };
-                    if (progressList.isEmpty) {
+                    if (recent.isEmpty) {
                       return const Padding(
                         padding: EdgeInsets.all(24),
                         child: Text('لم تبدأ الاستماع بعد'),
@@ -152,9 +114,9 @@ class ProgressScreen extends ConsumerWidget {
                     return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: progressList.length.clamp(0, 10),
+                      itemCount: recent.length.clamp(0, 10),
                       itemBuilder: (_, i) {
-                        final p = progressList[i];
+                        final p = recent[i];
                         final title =
                             lessonMap[p.lessonId] ?? 'درس ${p.lessonId}';
                         return ListTile(
@@ -170,9 +132,7 @@ class ProgressScreen extends ConsumerWidget {
                       },
                     );
                   },
-                );
-              },
-            ),
+                ),
             const SizedBox(height: 80),
           ],
         ),

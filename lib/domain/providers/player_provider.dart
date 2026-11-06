@@ -9,6 +9,7 @@ import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
 import 'package:al_daa_wal_dawaa/data/remote/archive_service.dart';
 import 'package:al_daa_wal_dawaa/data/services/app_audio_handler.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -77,7 +78,6 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   late final AppAudioHandler _handler;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlaybackState>? _playbackSub;
-  Timer? _saveTimer;
   DateTime _lastSave = DateTime.now();
 
   void _initListeners() {
@@ -122,17 +122,17 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
         : lesson.duration;
     final completed = AppConstants.isLessonCompleted(position, total);
 
-    await DatabaseHelper.instance.saveProgress(
-      ProgressModel(
-        lessonId: lesson.id,
-        position: position,
-        totalDuration: total,
-        completed: completed,
-        lastPlayed: DateTime.now(),
-      ),
+    final progress = ProgressModel(
+      lessonId: lesson.id,
+      position: position,
+      totalDuration: total,
+      completed: completed,
+      lastPlayed: DateTime.now(),
     );
-    // لا نستدعي _ref.invalidate(lessonsProvider) هنا لأن ذلك كان يُعيد
-    // بناء القائمة الكاملة كل X ثانية أثناء التشغيل ويُفقد موضع التمرير.
+    await DatabaseHelper.instance.saveProgress(progress);
+    // نحدّث progressMapProvider فقط — invalidate(lessonsProvider) كان يُعيد
+    // بناء القائمة الكاملة ويُفقد موضع التمرير
+    if (mounted) _ref.read(progressMapProvider.notifier).update(progress);
   }
 
   Future<String> _resolveUri(LessonModel lesson) async {
@@ -173,7 +173,9 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
       state = state.copyWith(
         status: PlayerStatus.playing,
-        duration: Duration(seconds: lesson.duration),
+        // المدة الحقيقية من الملف؛ مدة JSON تقديرية فقط
+        duration:
+            _handler.player.duration ?? Duration(seconds: lesson.duration),
         position: start,
         speed: _handler.player.speed,
       );
@@ -245,7 +247,6 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       ..onSkipToPrevious = null;
     _positionSub?.cancel();
     _playbackSub?.cancel();
-    _saveTimer?.cancel();
     _saveCurrentProgress();
     super.dispose();
   }

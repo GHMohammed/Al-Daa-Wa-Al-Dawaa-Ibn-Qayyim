@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.example.al_daa_wal_dawaa"
         minSdk = flutter.minSdkVersion
-        targetSdk = 34
+        targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

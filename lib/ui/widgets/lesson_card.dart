@@ -2,6 +2,7 @@ import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/download_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,13 +17,18 @@ class LessonCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lesson = item.lesson;
-    final progress = item.progress?.percentage ?? 0.0;
-    final completed = item.progress?.completed == true ||
+    // select: تُعاد بناء هذه البطاقة فقط عند تغيّر تقدم درسها
+    final saved = ref.watch(
+      progressMapProvider.select((map) => map[lesson.id]),
+    );
+    final progress = saved?.percentage ?? 0.0;
+    // totalDuration المحفوظ هو المدة الحقيقية من الملف لا تقدير JSON
+    final completed = saved?.completed == true ||
         AppConstants.isLessonCompleted(
-          item.progress?.position ?? 0,
-          lesson.duration,
+          saved?.position ?? 0,
+          saved?.totalDuration ?? lesson.duration,
         );
-    final inProgress = !completed && (item.progress?.position ?? 0) > 0;
+    final inProgress = !completed && (saved?.position ?? 0) > 0;
 
     return Card(
       child: InkWell(
