@@ -77,13 +77,13 @@ class LessonCard extends ConsumerWidget {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.lightSurface,
+                            color: context.colors.accentContainer,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             '${(progress * 100).toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: context.colors.onAccentContainer,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -121,17 +121,18 @@ class _LessonCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double size = 44;
+    final colors = context.colors;
 
     // مكتمل: دائرة خضراء مكتملة مع علامة ✓
     if (completed) {
       return Container(
         width: size,
         height: size,
-        decoration: const BoxDecoration(
-          color: AppColors.primary,
+        decoration: BoxDecoration(
+          color: colors.brand,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.check_rounded, color: Colors.white, size: 22),
+        child: Icon(Icons.check_rounded, color: colors.onHeader, size: 22),
       );
     }
 
@@ -145,9 +146,9 @@ class _LessonCircle extends StatelessWidget {
           CircularProgressIndicator(
             value: inProgress ? progress : 0,
             strokeWidth: 2.5,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: Theme.of(context).dividerColor,
             valueColor: AlwaysStoppedAnimation<Color>(
-              inProgress ? AppColors.secondary : Colors.grey.shade300,
+              inProgress ? colors.accent : Theme.of(context).dividerColor,
             ),
           ),
           Text(
@@ -155,7 +156,7 @@ class _LessonCircle extends StatelessWidget {
             style: TextStyle(
               fontSize: lessonId > 99 ? 10 : 13,
               fontWeight: FontWeight.bold,
-              color: inProgress ? AppColors.primary : Colors.grey.shade600,
+              color: inProgress ? colors.brand : colors.textMuted,
             ),
           ),
         ],

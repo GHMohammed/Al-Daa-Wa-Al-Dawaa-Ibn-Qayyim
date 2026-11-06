@@ -1,6 +1,6 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -25,11 +25,60 @@ class DatabaseHelper {
     return openDatabase(
       path,
       version: AppConstants.dbVersion,
-      onCreate: _onCreate,
+      onCreate: onCreate,
+      onUpgrade: onUpgrade,
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
+  /// تثبيت جديد: ننشئ كل الإصدارات بالترتيب
+  @visibleForTesting
+  static Future<void> onCreate(Database db, int version) async {
+    await _createV1(db);
+    await _createV2(db);
+  }
+
+  /// ترقية تطبيق موجود: ننفّذ فقط ما ينقصه دون المساس ببيانات المستخدم
+  @visibleForTesting
+  static Future<void> onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) await _createV2(db);
+  }
+
+  static Future<void> _createV2(Database db) async {
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableBookmarks} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lesson_id INTEGER NOT NULL,
+        position INTEGER NOT NULL,
+        label TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_bookmarks_lesson ON ${AppConstants.tableBookmarks} (lesson_id)',
+    );
+
+    // audio_path للملاحظات الصوتية (المرحلة 3)؛ text للنصية — أحدهما على الأقل
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableNotes} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lesson_id INTEGER NOT NULL,
+        position INTEGER NOT NULL,
+        text TEXT,
+        audio_path TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_notes_lesson ON ${AppConstants.tableNotes} (lesson_id)',
+    );
+  }
+
+  static Future<void> _createV1(Database db) async {
     await db.execute('''
       CREATE TABLE ${AppConstants.tableProgress} (
         lesson_id INTEGER PRIMARY KEY,

@@ -16,17 +16,18 @@ class MiniPlayer extends ConsumerWidget {
     if (!player.hasActiveLesson) return const SizedBox.shrink();
 
     final lesson = player.currentLesson!;
+    final colors = context.colors;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: colors.header,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: colors.shadow,
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -53,12 +54,12 @@ class MiniPlayer extends ConsumerWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: colors.onHeaderTrack,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.music_note_rounded,
-                    color: Colors.white,
+                    color: colors.onHeader,
                     size: 24,
                   ),
                 ),
@@ -71,8 +72,8 @@ class MiniPlayer extends ConsumerWidget {
                     children: [
                       Text(
                         lesson.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.onHeader,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -82,8 +83,8 @@ class MiniPlayer extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         AppConstants.formatDuration(player.position),
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: colors.onHeaderMuted,
                           fontSize: 12,
                         ),
                       ),
@@ -96,7 +97,7 @@ class MiniPlayer extends ConsumerWidget {
                     player.status == PlayerStatus.playing
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
-                    color: Colors.white,
+                    color: colors.onHeader,
                     size: 28,
                   ),
                   onPressed: () =>

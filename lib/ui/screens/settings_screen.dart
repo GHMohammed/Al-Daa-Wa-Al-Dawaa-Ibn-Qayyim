@@ -17,7 +17,7 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // لا نحدد backgroundColor — الـ Scaffold يأخذها من scaffoldBackgroundColor
-    // في الثيم (فاتح: 0xFFF2F2F7 | داكن: 0xFF121212)
+    // في الثيم (AppTheme)
     return Scaffold(
       appBar: AppBar(title: const Text('الإعدادات')),
       body: ListView(
@@ -72,7 +72,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 /// بطاقة بزوايا دائرية — الحاوية المشتركة لكل قسم
-/// اللون من cardTheme:  فاتح → Colors.white  |  داكن → Color(0xFF1E1E1E)
+/// اللون من cardTheme في الثيم
 class _SettingsCard extends StatelessWidget {
   const _SettingsCard({required this.child});
   final Widget child;
@@ -80,7 +80,6 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // cardTheme.color: Colors.white (فاتح) أو AppColors.darkSurface (داكن)
     final cardColor =
         Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
 
@@ -90,14 +89,13 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        // dividerColor: 0xFFEEEEEE (فاتح) | 0xFF2A2A2A (داكن)
         border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
         boxShadow: [
           BoxShadow(
             // الظل مرئي فقط في الوضع الفاتح
             color: isDark
                 ? Colors.transparent
-                : Colors.black.withValues(alpha: 0.04),
+                : context.colors.shadow.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -108,7 +106,7 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
-/// مربع أيقونة ملوّن بالأخضر الفاتح — ألوان ثابتة (هوية بصرية)
+/// مربع أيقونة بخلفية هادئة من لون الهوية
 class _IconBox extends StatelessWidget {
   const _IconBox({required this.icon, this.size = 44});
   final IconData icon;
@@ -120,10 +118,10 @@ class _IconBox extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.lightSurface, // 0xFFE1F5EE — ثابت (هوية التطبيق)
+        color: context.colors.accentContainer,
         borderRadius: BorderRadius.circular(size * 0.23),
       ),
-      child: Icon(icon, color: AppColors.primary, size: size * 0.5),
+      child: Icon(icon, color: context.colors.onAccentContainer, size: size * 0.5),
     );
   }
 }
@@ -169,12 +167,11 @@ class _BookCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // اللون الأخضر ثابت — هوية التطبيق
-                const Text(
+                Text(
                   '${AppConstants.totalLessons} درساً مفهرساً',
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.secondary,
+                    color: context.colors.accent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -213,6 +210,7 @@ class _StorageCard extends ConsumerWidget {
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12);
     // لون الأزرار المعطّلة من الثيم
     final disabledColor = Theme.of(context).disabledColor;
+    final colors = context.colors;
 
     // ── حذف كل الدروس بعد تأكيد AlertDialog
     Future<void> deleteAll() async {
@@ -231,7 +229,7 @@ class _StorageCard extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: colors.danger),
               child: const Text('مسح الكل'),
             ),
           ],
@@ -276,13 +274,13 @@ class _StorageCard extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.lightSurface,
+                  color: colors.accentContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   storageMb,
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: colors.onAccentContainer,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -299,8 +297,7 @@ class _StorageCard extends ConsumerWidget {
                   .clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor: trackColor,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.secondary),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
             ),
           ),
           const SizedBox(height: 8),
@@ -318,8 +315,8 @@ class _StorageCard extends ConsumerWidget {
                   icon: const Icon(Icons.folder_open_rounded, size: 18),
                   label: const Text('إدارة الدروس'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary, width: 1),
+                    foregroundColor: colors.brand,
+                    side: BorderSide(color: colors.brand, width: 1),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -334,8 +331,8 @@ class _StorageCard extends ConsumerWidget {
                   icon: const Icon(Icons.delete_outline_rounded, size: 18),
                   label: const Text('مسح الكل'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red, width: 1),
+                    foregroundColor: colors.danger,
+                    side: BorderSide(color: colors.danger, width: 1),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -383,10 +380,10 @@ class _ManageLessonsSheet extends ConsumerWidget {
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
     final subtitleColor =
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+    final colors = context.colors;
 
     return Container(
       decoration: BoxDecoration(
-        // cardTheme.color: Colors.white (فاتح) | 0xFF1E1E1E (داكن)
         color: sheetBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -406,7 +403,7 @@ class _ManageLessonsSheet extends ConsumerWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          // العنوان + عداد الدروس (badge بألوان هوية التطبيق — ثابتة)
+          // العنوان + عداد الدروس
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -423,13 +420,13 @@ class _ManageLessonsSheet extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.lightSurface,
+                    color: colors.accentContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${downloadedLessons.length} درس',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.onAccentContainer,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -474,9 +471,8 @@ class _ManageLessonsSheet extends ConsumerWidget {
                       final item = downloadedLessons[i];
                       return ListTile(
                         leading: CircleAvatar(
-                          // دائرة الرقم: ألوان هوية التطبيق — ثابتة
-                          backgroundColor: AppColors.lightSurface,
-                          foregroundColor: AppColors.primary,
+                          backgroundColor: colors.accentContainer,
+                          foregroundColor: colors.onAccentContainer,
                           radius: 18,
                           child: Text(
                             '${item.lesson.id}',
@@ -503,9 +499,9 @@ class _ManageLessonsSheet extends ConsumerWidget {
                           ),
                         ),
                         trailing: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline_rounded,
-                            color: Colors.red,
+                            color: colors.danger,
                             size: 22,
                           ),
                           onPressed: () async {
@@ -569,7 +565,7 @@ class _AboutCard extends StatelessWidget {
               ),
             ],
           ),
-          // الفاصل من الثيم (0xFFEEEEEE فاتح | 0xFF2A2A2A داكن)
+          // الفاصل من الثيم
           Divider(height: 24, color: Theme.of(context).dividerColor),
           // صف المطور — قابل للنقر لفتح الموقع
           InkWell(

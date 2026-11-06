@@ -30,17 +30,15 @@ class ProgressCircle extends StatelessWidget {
         painter: _CirclePainter(
           progress: progress.clamp(0.0, 1.0),
           strokeWidth: strokeWidth,
-          color: AppColors.secondary,
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF2A4A40)
-              : AppColors.lightSurface,
+          color: context.colors.accent,
+          backgroundColor: context.colors.track,
         ),
         child: Center(
           child: Text(
             text,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: context.colors.brand,
                 ),
           ),
         ),

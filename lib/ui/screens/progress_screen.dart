@@ -27,18 +27,18 @@ class ProgressScreen extends ConsumerWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: context.colors.header,
+                borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'تقدمك في الكتاب',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.colors.onHeader,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -155,6 +155,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Card(
       child: Padding(
         // padding مخفّض لإعطاء مزيد من المساحة للمحتوى
@@ -162,14 +163,14 @@ class _StatCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.primary, size: 26),
+            Icon(icon, color: colors.brand, size: 26),
             const SizedBox(height: 6),
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: colors.brand,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -178,7 +179,7 @@ class _StatCard extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 11, color: colors.textMuted),
               // maxLines:1 يمنع التفاف العنوان إلى سطرين ويحل الـ overflow
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
