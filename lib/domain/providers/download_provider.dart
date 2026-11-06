@@ -7,7 +7,7 @@ enum DownloadStatus { notDownloaded, downloading, downloaded, error }
 
 final downloadStatusProvider =
     StateNotifierProvider<DownloadNotifier, Map<int, DownloadStatus>>(
-  (ref) => DownloadNotifier(),
+  (ref) => DownloadNotifier(ref),
 );
 
 final downloadProgressProvider =
@@ -18,7 +18,9 @@ final storageUsedProvider = FutureProvider<double>((ref) async {
 });
 
 class DownloadNotifier extends StateNotifier<Map<int, DownloadStatus>> {
-  DownloadNotifier() : super({});
+  DownloadNotifier(this._ref) : super({});
+
+  final Ref _ref;
 
   DownloadStatus statusFor(int lessonId) =>
       state[lessonId] ?? DownloadStatus.notDownloaded;
@@ -27,10 +29,9 @@ class DownloadNotifier extends StateNotifier<Map<int, DownloadStatus>> {
     state = {...state, lessonId: status};
   }
 
-  Future<void> downloadLesson(
-    LessonModel lesson,
-    void Function(double progress) onProgress,
-  ) async {
+  /// التقدم يُحدَّث من هنا لا من الـ widget — زر التحميل قد يُتلف أثناء
+  /// السكرول أو التنقل، واستخدام ref الخاص به بعدها يرمي استثناءً يوقف التحميل
+  Future<void> downloadLesson(LessonModel lesson) async {
     if (statusFor(lesson.id) == DownloadStatus.downloading) return;
 
     final already = await DownloadManager.instance.isDownloaded(lesson.id);
@@ -45,9 +46,11 @@ class DownloadNotifier extends StateNotifier<Map<int, DownloadStatus>> {
       await DownloadManager.instance.downloadLesson(
         lessonId: lesson.id,
         url: lesson.fileUrl,
-        onProgress: onProgress,
+        onProgress: (p) =>
+            _ref.read(downloadProgressProvider(lesson.id).notifier).state = p,
       );
       setStatus(lesson.id, DownloadStatus.downloaded);
+      _ref.invalidate(storageUsedProvider);
     } catch (e, st) {
       debugPrint('[DL] ❌ downloadLesson failed: $e\n$st');
       setStatus(lesson.id, DownloadStatus.error);

@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/data/local/database_helper.dart';
+import 'package:al_daa_wal_dawaa/data/local/download_manager.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
 import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
 import 'package:al_daa_wal_dawaa/data/remote/archive_service.dart';
 import 'package:al_daa_wal_dawaa/data/services/app_audio_handler.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,6 +67,9 @@ final playerProvider =
 class PlayerNotifier extends StateNotifier<PlayerState> {
   PlayerNotifier(this._ref) : super(const PlayerState()) {
     _handler = _ref.read(audioHandlerProvider);
+    _handler
+      ..onSkipToNext = playNext
+      ..onSkipToPrevious = playPrevious;
     _initListeners();
   }
 
@@ -131,8 +137,16 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   Future<String> _resolveUri(LessonModel lesson) async {
     final local = await DatabaseHelper.instance.getDownloadPath(lesson.id);
-    if (local != null && local.isNotEmpty) return local;
-    return lesson.fileUrl;
+    if (local != null && local.isNotEmpty) {
+      if (await File(local).exists()) return local;
+      // الملف حُذف من الجهاز — ننظّف السجل ونرجع للبث
+      await DatabaseHelper.instance.deleteDownload(lesson.id);
+      _ref
+          .read(downloadStatusProvider.notifier)
+          .setStatus(lesson.id, DownloadStatus.notDownloaded);
+    }
+    // نفس صيغة التحميل حتى لا تعترض صفحة تأكيد Google Drive البث
+    return DownloadManager.normalizeDownloadUrl(lesson.fileUrl);
   }
 
   Future<void> play(LessonModel lesson, {Duration? startPosition}) async {
@@ -226,6 +240,9 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   @override
   void dispose() {
+    _handler
+      ..onSkipToNext = null
+      ..onSkipToPrevious = null;
     _positionSub?.cancel();
     _playbackSub?.cancel();
     _saveTimer?.cancel();
