@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:just_audio/just_audio.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 /// معالج الصوت للتشغيل في الخلفية مع just_audio
 class AppAudioHandler extends BaseAudioHandler with SeekHandler {
@@ -23,6 +27,24 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
 
   LessonModel? get currentLesson => _currentLesson;
   AudioPlayer get player => _player;
+
+  Uri? _cover;
+
+  /// audio_service لا يقرأ asset:/// — ننسخ الغلاف مرة واحدة إلى ملف محلي
+  Future<Uri?> _coverUri() async {
+    if (_cover != null) return _cover;
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File(p.join(dir.path, 'cover.png'));
+      if (!await file.exists()) {
+        final data = await rootBundle.load(AppConstants.coverImagePath);
+        await file.writeAsBytes(data.buffer.asUint8List(), flush: true);
+      }
+      return _cover = file.uri;
+    } catch (_) {
+      return null; // الإشعار يعمل بدون صورة
+    }
+  }
 
   PlaybackState _transformEvent(PlaybackEvent event) {
     return PlaybackState(
@@ -65,7 +87,7 @@ class AppAudioHandler extends BaseAudioHandler with SeekHandler {
       title: lesson.title,
       artist: AppConstants.sheikhName,
       duration: Duration(seconds: lesson.duration),
-      artUri: Uri.parse('asset:///${AppConstants.coverImagePath}'),
+      artUri: await _coverUri(),
     );
     mediaItem.add(item);
 

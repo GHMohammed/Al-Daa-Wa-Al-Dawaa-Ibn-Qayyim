@@ -1,9 +1,12 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,20 +94,20 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                             text.bodySmall?.copyWith(color: colors.textMuted),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      _SpeedChip(speed: player.speed),
+                      _ToolsRow(
+                        lessonId: lesson.id,
+                        speed: player.speed,
+                        position: player.position,
+                      ),
                       const SizedBox(height: AppSpacing.sm),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xs,
-                        ),
-                        child: Slider(
-                          value: player.position.inMilliseconds
-                              .toDouble()
-                              .clamp(0.0, maxMs),
-                          max: maxMs > 0 ? maxMs : 1,
-                          onChanged: (v) =>
-                              notifier.seek(Duration(milliseconds: v.toInt())),
-                        ),
+                      _SeekBar(
+                        lessonId: lesson.id,
+                        positionMs: player.position.inMilliseconds
+                            .toDouble()
+                            .clamp(0.0, maxMs),
+                        maxMs: maxMs > 0 ? maxMs : 1,
+                        onSeek: (v) =>
+                            notifier.seek(Duration(milliseconds: v.toInt())),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -147,6 +150,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                                 text.bodySmall?.copyWith(color: colors.danger),
                           ),
                         ),
+                      _AnnotationsSummary(lessonId: lesson.id),
                       const Spacer(),
                       _NextUp(currentId: lesson.id),
                     ],
@@ -254,56 +258,279 @@ class _Cover extends StatelessWidget {
   }
 }
 
-/// زر السرعة — يفتح قائمة السرعات المتاحة
-class _SpeedChip extends ConsumerWidget {
-  const _SpeedChip({required this.speed});
+/// أدوات الدرس تحت العنوان: السرعة، إضافة علامة، كتابة ملاحظة
+class _ToolsRow extends ConsumerWidget {
+  const _ToolsRow({
+    required this.lessonId,
+    required this.speed,
+    required this.position,
+  });
 
+  final int lessonId;
   final double speed;
+  final Duration position;
 
-  static String label(double s) {
+  static String speedLabel(double s) {
     final str = s.toStringAsFixed(2);
     return '${str.replaceFirst(RegExp(r'\.?0+$'), '')}×';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
-    return PopupMenuButton<double>(
-      initialValue: speed,
-      tooltip: 'سرعة التشغيل',
-      position: PopupMenuPosition.under,
-      onSelected: (s) => ref.read(playerProvider.notifier).setSpeed(s),
-      itemBuilder: (_) => [
-        for (final s in AppConstants.playbackSpeeds)
-          PopupMenuItem(value: s, child: Text(label(s))),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm + 2,
-          vertical: AppSpacing.xs - 1,
-        ),
-        decoration: BoxDecoration(
-          color: colors.accentContainer,
-          borderRadius: BorderRadius.circular(AppRadius.pill),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.speed_rounded,
-                size: 16, color: colors.onAccentContainer),
-            const SizedBox(width: AppSpacing.xxs + 2),
-            Text(
-              'السرعة ${label(speed)}',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(color: colors.onAccentContainer),
-            ),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
+      children: [
+        PopupMenuButton<double>(
+          initialValue: speed,
+          tooltip: 'سرعة التشغيل',
+          position: PopupMenuPosition.under,
+          onSelected: (s) => ref.read(playerProvider.notifier).setSpeed(s),
+          itemBuilder: (_) => [
+            for (final s in AppConstants.playbackSpeeds)
+              PopupMenuItem(value: s, child: Text(speedLabel(s))),
           ],
+          child: _ToolChip(
+            icon: Icons.speed_rounded,
+            label: 'السرعة ${speedLabel(speed)}',
+          ),
         ),
+        _ToolChip(
+          icon: Icons.bookmark_add_outlined,
+          label: 'علامة',
+          onTap: () => addBookmarkWithFeedback(
+            context,
+            ref,
+            lessonId: lessonId,
+            position: position,
+          ),
+        ),
+        _ToolChip(
+          icon: Icons.edit_note_rounded,
+          label: 'ملاحظة',
+          onTap: () => showNoteEditor(
+            context,
+            ref,
+            lessonId: lessonId,
+            position: position,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ToolChip extends StatelessWidget {
+  const _ToolChip({required this.icon, required this.label, this.onTap});
+
+  final IconData icon;
+  final String label;
+
+  /// null عندما يتولّى الضغطَ عنصرٌ أب (مثل قائمة السرعة)
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final chip = Container(
+      constraints: const BoxConstraints(minHeight: 36),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm + 2),
+      decoration: BoxDecoration(
+        color: colors.accentContainer,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: colors.onAccentContainer),
+          const SizedBox(width: AppSpacing.xxs + 2),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium
+                ?.copyWith(color: colors.onAccentContainer),
+          ),
+        ],
+      ),
+    );
+    if (onTap == null) return chip;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        onTap: onTap,
+        child: chip,
       ),
     );
   }
+}
+
+/// شريط التقديم مع نقاط العلامات (ذهبية) والملاحظات (خضراء) فوق مواضعها
+class _SeekBar extends ConsumerWidget {
+  const _SeekBar({
+    required this.lessonId,
+    required this.positionMs,
+    required this.maxMs,
+    required this.onSeek,
+  });
+
+  final int lessonId;
+  final double positionMs;
+  final double maxMs;
+  final ValueChanged<double> onSeek;
+
+  /// المسافة الأفقية للمسار داخل الـ Slider — نفسها لحساب مواضع النقاط
+  static const double _inset = AppSpacing.xl;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final items = ref.watch(lessonAnnotationsProvider(lessonId));
+
+    // الرسم بـ CustomPainter (لا LayoutBuilder) لأن الشاشة داخل IntrinsicHeight
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _TicksPainter(
+              fractions: [
+                for (final i in items)
+                  (i.position * 1000 / maxMs).clamp(0.0, 1.0),
+              ],
+              colors: [
+                for (final i in items) i.isNote ? colors.brand : colors.gold,
+              ],
+              inset: _inset,
+              rtl: Directionality.of(context) == TextDirection.rtl,
+            ),
+          ),
+        ),
+        Slider(
+          padding: const EdgeInsets.symmetric(horizontal: _inset),
+          value: positionMs,
+          max: maxMs,
+          onChanged: onSeek,
+        ),
+      ],
+    );
+  }
+}
+
+class _TicksPainter extends CustomPainter {
+  _TicksPainter({
+    required this.fractions,
+    required this.colors,
+    required this.inset,
+    required this.rtl,
+  });
+
+  final List<double> fractions;
+  final List<Color> colors;
+  final double inset;
+  final bool rtl;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final track = size.width - inset * 2;
+    final cy = size.height / 2;
+    for (var i = 0; i < fractions.length; i++) {
+      final offset = inset + fractions[i] * track;
+      final x = rtl ? size.width - offset : offset;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(x, cy), width: 3, height: 14),
+          const Radius.circular(2),
+        ),
+        Paint()..color = colors[i],
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TicksPainter old) =>
+      old.rtl != rtl ||
+      old.inset != inset ||
+      !listEquals(old.fractions, fractions) ||
+      !listEquals(old.colors, colors);
+}
+
+/// سطر يلخّص علامات وملاحظات الدرس ويفتح قائمتها
+class _AnnotationsSummary extends ConsumerWidget {
+  const _AnnotationsSummary({required this.lessonId});
+
+  final int lessonId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(lessonAnnotationsProvider(lessonId));
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    final notes = items.where((i) => i.isNote).length;
+    final marks = items.length - notes;
+    // العدد في العربية: مفرد، مثنى، جمع (3–10)، ثم مفرد منصوب (11+)
+    String count(int n, String one, String two, String few, String many) =>
+        switch (n) {
+          1 => one,
+          2 => two,
+          <= 10 => '$n $few',
+          _ => '$n $many',
+        };
+    final parts = [
+      if (marks > 0) count(marks, 'علامة واحدة', 'علامتان', 'علامات', 'علامة'),
+      if (notes > 0)
+        count(notes, 'ملاحظة واحدة', 'ملاحظتان', 'ملاحظات', 'ملاحظة'),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: TextButton.icon(
+        onPressed: () => _showLessonAnnotations(context, lessonId),
+        icon: const Icon(Icons.bookmarks_outlined, size: 18),
+        label: Text('في هذا الدرس: ${parts.join(' و')}'),
+      ),
+    );
+  }
+}
+
+void _showLessonAnnotations(BuildContext context, int lessonId) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.55,
+      maxChildSize: 0.9,
+      builder: (ctx, scroll) => Consumer(
+        builder: (ctx, ref, _) {
+          final items = ref.watch(lessonAnnotationsProvider(lessonId));
+          if (items.isEmpty) {
+            return Center(
+              child: Text(
+                'لا توجد علامات أو ملاحظات في هذا الدرس',
+                style: TextStyle(color: ctx.colors.textMuted),
+              ),
+            );
+          }
+          return ListView.builder(
+            controller: scroll,
+            itemCount: items.length,
+            itemBuilder: (_, i) => AnnotationTile(
+              item: items[i],
+              onTap: () {
+                ref
+                    .read(playerProvider.notifier)
+                    .seek(Duration(seconds: items[i].position));
+                Navigator.pop(ctx);
+              },
+            ),
+          );
+        },
+      ),
+    ),
+  );
 }
 
 class _Controls extends ConsumerWidget {

@@ -1,3 +1,4 @@
+import 'package:al_daa_wal_dawaa/ui/screens/bookmarks_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/home_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/player_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/progress_screen.dart';
@@ -18,6 +19,10 @@ class AppRouter {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/bookmarks',
+        builder: (context, state) => const BookmarksScreen(),
       ),
       GoRoute(
         path: '/progress',

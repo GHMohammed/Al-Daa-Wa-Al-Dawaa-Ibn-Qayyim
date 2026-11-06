@@ -12,6 +12,7 @@ import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum PlayerStatus { idle, loading, playing, paused, error }
 
@@ -72,6 +73,18 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       ..onSkipToNext = playNext
       ..onSkipToPrevious = playPrevious;
     _initListeners();
+    _restoreSpeed();
+  }
+
+  static const _speedKey = 'playback_speed';
+
+  /// السرعة المختارة سابقاً تُطبّق على كل الدروس حتى يغيّرها المستخدم
+  Future<void> _restoreSpeed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getDouble(_speedKey);
+    if (saved == null || !mounted) return;
+    await _handler.setSpeed(saved);
+    state = state.copyWith(speed: saved);
   }
 
   final Ref _ref;
@@ -204,6 +217,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   Future<void> setSpeed(double speed) async {
     await _handler.setSpeed(speed);
     state = state.copyWith(speed: speed);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_speedKey, speed);
   }
 
   Future<void> skipForward30() => _handler.skipForward30();
