@@ -101,8 +101,7 @@ class DownloadButton extends ConsumerWidget {
   }
 
   Future<void> _openInBrowser(BuildContext context) async {
-    final opened =
-        await DownloadManager.instance.openInBrowser(lesson.fileUrl);
+    final opened = await DownloadManager.instance.openInBrowser(lesson.fileUrl);
     if (!context.mounted) return;
     if (!opened) {
       ScaffoldMessenger.of(context).showSnackBar(

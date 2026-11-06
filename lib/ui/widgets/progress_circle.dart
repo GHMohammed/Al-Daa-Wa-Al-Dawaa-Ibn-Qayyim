@@ -9,7 +9,7 @@ class ProgressCircle extends StatelessWidget {
     super.key,
     required this.progress,
     this.size = 160,
-    this.strokeWidth = 12,
+    this.strokeWidth = 10,
     this.centerText,
   });
 
@@ -34,12 +34,24 @@ class ProgressCircle extends StatelessWidget {
           backgroundColor: context.colors.track,
         ),
         child: Center(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.brand,
-                ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                text,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: AppTypography.medium,
+                      color: context.colors.brand,
+                    ),
+              ),
+              Text(
+                'من الكتاب',
+                style: Theme.of(context)
+                    .textTheme
+                    .labelMedium
+                    ?.copyWith(color: context.colors.textMuted),
+              ),
+            ],
           ),
         ),
       ),
@@ -91,6 +103,8 @@ class _CirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CirclePainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }

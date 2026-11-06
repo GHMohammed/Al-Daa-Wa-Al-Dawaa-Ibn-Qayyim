@@ -35,7 +35,8 @@ final lessonsProvider = FutureProvider<List<LessonWithProgress>>((ref) async {
 
   final downloadNotifier = ref.read(downloadStatusProvider.notifier);
   if (ref.read(downloadStatusProvider).isEmpty) {
-    await downloadNotifier.loadInitialStatuses(lessons.map((l) => l.id).toList());
+    await downloadNotifier
+        .loadInitialStatuses(lessons.map((l) => l.id).toList());
   }
 
   final statuses = ref.read(downloadStatusProvider);

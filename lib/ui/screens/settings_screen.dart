@@ -3,7 +3,10 @@ import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -18,28 +21,42 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // لا نحدد backgroundColor — الـ Scaffold يأخذها من scaffoldBackgroundColor
     // في الثيم (AppTheme)
-    return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: const [
-          // ── القسم الأول: الكتاب ──────────────────────────────
-          _SectionLabel(label: 'الكتاب'),
-          SizedBox(height: 8),
-          _BookCard(),
-          SizedBox(height: 24),
-          // ── القسم الثاني: إدارة التخزين ──────────────────────
-          _SectionLabel(label: 'إدارة التخزين'),
-          SizedBox(height: 8),
-          _StorageCard(),
-          SizedBox(height: 24),
-          // ── القسم الثالث: عن التطبيق ─────────────────────────
-          _SectionLabel(label: 'عن التطبيق'),
-          SizedBox(height: 8),
-          _AboutCard(),
-        ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: StatusBarScrim(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: const [
+              PageHeader(title: 'الإعدادات'),
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── القسم الأول: الكتاب ──────────────────────────
+                    _SectionLabel(label: 'الكتاب'),
+                    SizedBox(height: 8),
+                    _BookCard(),
+                    SizedBox(height: 24),
+                    // ── القسم الثاني: إدارة التخزين ──────────────────
+                    _SectionLabel(label: 'إدارة التخزين'),
+                    SizedBox(height: 8),
+                    _StorageCard(),
+                    SizedBox(height: 24),
+                    // ── القسم الثالث: عن التطبيق ─────────────────────
+                    _SectionLabel(label: 'عن التطبيق'),
+                    SizedBox(height: 8),
+                    _AboutCard(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
     );
   }
 }
@@ -61,7 +78,7 @@ class _SectionLabel extends StatelessWidget {
         label,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: AppTypography.medium,
           // فاتح: رمادي متوسط  |  داكن: أبيض شفاف 50%
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           letterSpacing: 0.3,
@@ -80,8 +97,8 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor =
-        Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final cardColor = Theme.of(context).cardTheme.color ??
+        Theme.of(context).colorScheme.surface;
 
     return Container(
       width: double.infinity,
@@ -121,7 +138,8 @@ class _IconBox extends StatelessWidget {
         color: context.colors.accentContainer,
         borderRadius: BorderRadius.circular(size * 0.23),
       ),
-      child: Icon(icon, color: context.colors.onAccentContainer, size: size * 0.5),
+      child:
+          Icon(icon, color: context.colors.onAccentContainer, size: size * 0.5),
     );
   }
 }
@@ -152,7 +170,7 @@ class _BookCard extends StatelessWidget {
                 const Text(
                   'شرح كتاب الداء والدواء لابن القيم الجوزية',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.medium,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -172,7 +190,7 @@ class _BookCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: context.colors.accent,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppTypography.medium,
                   ),
                 ),
               ],
@@ -268,7 +286,8 @@ class _StorageCard extends ConsumerWidget {
             children: [
               const Text(
                 'المساحة المستخدمة',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style:
+                    TextStyle(fontWeight: AppTypography.medium, fontSize: 14),
               ),
               Container(
                 padding:
@@ -282,7 +301,7 @@ class _StorageCard extends ConsumerWidget {
                   style: TextStyle(
                     color: colors.onAccentContainer,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppTypography.medium,
                   ),
                 ),
               ),
@@ -293,8 +312,8 @@ class _StorageCard extends ConsumerWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: (downloadedCount / AppConstants.totalLessons)
-                  .clamp(0.0, 1.0),
+              value:
+                  (downloadedCount / AppConstants.totalLessons).clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor: trackColor,
               valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
@@ -370,8 +389,8 @@ class _ManageLessonsSheet extends ConsumerWidget {
     );
 
     // ألوان الثيم المستخدمة داخل الـ sheet
-    final sheetBg =
-        Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface;
+    final sheetBg = Theme.of(context).cardTheme.color ??
+        Theme.of(context).colorScheme.surface;
     final handleColor =
         Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2);
     final emptyIconColor =
@@ -405,20 +424,19 @@ class _ManageLessonsSheet extends ConsumerWidget {
           ),
           // العنوان + عداد الدروس
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'الدروس المحمّلة',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: AppTypography.medium,
                       ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
                     color: colors.accentContainer,
                     borderRadius: BorderRadius.circular(12),
@@ -428,7 +446,7 @@ class _ManageLessonsSheet extends ConsumerWidget {
                     style: TextStyle(
                       color: colors.onAccentContainer,
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: AppTypography.medium,
                     ),
                   ),
                 ),
@@ -462,8 +480,8 @@ class _ManageLessonsSheet extends ConsumerWidget {
                   )
                 : ListView.separated(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8, horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                     itemCount: downloadedLessons.length,
                     separatorBuilder: (_, __) =>
                         const Divider(height: 1, indent: 60),
@@ -478,7 +496,7 @@ class _ManageLessonsSheet extends ConsumerWidget {
                             '${item.lesson.id}',
                             style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: AppTypography.medium,
                             ),
                           ),
                         ),
@@ -591,7 +609,7 @@ class _AboutCard extends StatelessWidget {
                         'م. محمد نور الدين',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: AppTypography.medium,
                         ),
                       ),
                     ],

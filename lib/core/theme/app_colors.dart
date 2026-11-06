@@ -3,41 +3,59 @@ import 'package:flutter/material.dart';
 /// اللوحة الخام — تغيير الهوية البصرية يكون هنا فقط.
 /// لا تُستخدم مباشرة في الواجهات؛ استخدم [AppColorTokens] عبر `context.colors`.
 abstract final class AppPalette {
-  static const Color green900 = Color(0xFF0F6E56);
-  static const Color green600 = Color(0xFF1D9E75);
-  static const Color green200 = Color(0xFFB8E6D5);
-  static const Color green50 = Color(0xFFE1F5EE);
-  static const Color greenDark = Color(0xFF2A4A40);
-  static const Color greenDarker = Color(0xFF1C3A31);
+  // الأخضر — هوية التطبيق
+  static const Color green950 = Color(0xFF0E3D2E);
+  static const Color green900 = Color(0xFF104533);
+  static const Color green700 = Color(0xFF17694A);
+  static const Color green400 = Color(0xFF3CAA7A);
+  static const Color green100 = Color(0xFFE6F0EA);
+  static const Color green800Ink = Color(0xFF145C40);
+  static const Color greenDarkSurface = Color(0xFF17302A);
+  static const Color greenMist = Color(0xFFA9C3B6);
+  static const Color greenMintInk = Color(0xFF93D1B2);
 
-  static const Color neutral0 = Color(0xFFFFFFFF);
-  static const Color neutral50 = Color(0xFFF5F5F5);
-  static const Color neutral100 = Color(0xFFF2F2F7);
-  static const Color neutral150 = Color(0xFFEEEEEE);
-  static const Color neutral800 = Color(0xFF2A2A2A);
-  static const Color neutral900 = Color(0xFF1E1E1E);
-  static const Color neutral950 = Color(0xFF121212);
+  // الذهبي — للتمييز (التقدم الجزئي، زر التشغيل في البطاقة، الزخرفة)
+  static const Color gold500 = Color(0xFFC6A253);
+  static const Color gold400 = Color(0xFFD5B366);
+  static const Color sand = Color(0xFFB9A57A);
+  static const Color sandDark = Color(0xFF5E7A6C);
 
-  static const Color red600 = Color(0xFFD32F2F);
+  // المحايدات بلمسة خضراء
+  static const Color paper = Color(0xFFF6F7F4);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color line = Color(0xFFE3E7E1);
+  static const Color ring = Color(0xFFCDD5D0);
+  static const Color ink = Color(0xFF13241C);
+  static const Color inkSoft = Color(0xFF41524A);
+  static const Color inkMute = Color(0xFF6B7A72);
+
+  static const Color night = Color(0xFF0D1310);
+  static const Color nightCard = Color(0xFF141C19);
+  static const Color nightLine = Color(0xFF1E2925);
+  static const Color nightRing = Color(0xFF37453F);
+  static const Color moon = Color(0xFFE7EDE9);
+  static const Color moonSoft = Color(0xFFC2CDC7);
+  static const Color moonMute = Color(0xFF8D9D95);
+
+  static const Color red600 = Color(0xFFC0392B);
   static const Color red300 = Color(0xFFEF9A9A);
-  static const Color success600 = Color(0xFF2E7D32);
-  static const Color success100 = Color(0xFFC8E6C9);
-  static const Color success300 = Color(0xFF81C784);
-  static const Color success900 = Color(0xFF1B3A1E);
 }
 
-/// ألوان الهوية الثابتة في الوضعين (رأس الصفحات الملوّن، الأزرار الرئيسية)
+/// ألوان الهوية الثابتة في الوضعين
 abstract final class AppColors {
-  static const Color primary = AppPalette.green900;
-  static const Color secondary = AppPalette.green600;
+  static const Color primary = AppPalette.green700;
+  static const Color hero = AppPalette.green950;
+  static const Color gold = AppPalette.gold500;
 }
 
-/// ألوان دلالية تتبدّل بين الفاتح والداكن — `context.colors.accentContainer`
+/// ألوان دلالية تتبدّل بين الفاتح والداكن — `context.colors.gold`
 @immutable
 class AppColorTokens extends ThemeExtension<AppColorTokens> {
   const AppColorTokens({
     required this.brand,
     required this.accent,
+    required this.gold,
+    required this.onGold,
     required this.accentContainer,
     required this.onAccentContainer,
     required this.header,
@@ -45,6 +63,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.onHeaderMuted,
     required this.onHeaderTrack,
     required this.track,
+    required this.ringTrack,
+    required this.pattern,
+    required this.textSecondary,
     required this.textMuted,
     required this.textSubtle,
     required this.success,
@@ -53,26 +74,37 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.shadow,
   });
 
-  /// اللون الأساسي للهوية (أزرار رئيسية، أيقونات مميزة)
+  /// الأخضر الأساسي (أزرار التشغيل، الدروس المكتملة، شريط الإنجاز)
   final Color brand;
 
-  /// لون التمييز (مؤشرات التقدم، الحالة النشطة)
+  /// مؤشرات التقدم العامة
   final Color accent;
 
-  /// خلفية هادئة بلون الهوية (شارات، مربعات الأيقونات)
+  /// الذهبي: التقدم الجزئي في الدرس، زر بطاقة «أكمل الاستماع»، الزخرفة على الأخضر
+  final Color gold;
+  final Color onGold;
+
+  /// خلفية هادئة بلون الهوية (الشارات، أدوات المشغّل، عنصر التنقل النشط)
   final Color accentContainer;
   final Color onAccentContainer;
 
-  /// رأس الصفحة الملوّن والمشغّل المصغّر
+  /// السطح الأخضر العميق (بطاقة «أكمل الاستماع»، غلاف المشغّل، المشغّل المصغّر)
   final Color header;
   final Color onHeader;
   final Color onHeaderMuted;
   final Color onHeaderTrack;
 
-  /// مسار أشرطة/دوائر التقدم الفارغ
+  /// مسار أشرطة التقدم الفارغ والفواصل
   final Color track;
 
-  /// نص ثانوي (60%) ونص خافت (45%)
+  /// إطار دوائر الدروس التي لم تبدأ
+  final Color ringTrack;
+
+  /// خطوط الزخرفة على خلفية الصفحة
+  final Color pattern;
+
+  /// نص ثانوي، ونص خافت، ونص أخفت
+  final Color textSecondary;
   final Color textMuted;
   final Color textSubtle;
 
@@ -82,37 +114,47 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color shadow;
 
   static const light = AppColorTokens(
-    brand: AppPalette.green900,
-    accent: AppPalette.green600,
-    accentContainer: AppPalette.green50,
-    onAccentContainer: AppPalette.green900,
-    header: AppPalette.green900,
-    onHeader: AppPalette.neutral0,
-    onHeaderMuted: Color(0xB3FFFFFF),
-    onHeaderTrack: Color(0x3DFFFFFF),
-    track: AppPalette.green200,
-    textMuted: Color(0x99000000),
-    textSubtle: Color(0x73000000),
-    success: AppPalette.success600,
-    successContainer: AppPalette.success100,
+    brand: AppPalette.green700,
+    accent: AppPalette.green700,
+    gold: AppPalette.gold500,
+    onGold: AppPalette.green950,
+    accentContainer: AppPalette.green100,
+    onAccentContainer: AppPalette.green800Ink,
+    header: AppPalette.green950,
+    onHeader: AppPalette.white,
+    onHeaderMuted: AppPalette.greenMist,
+    onHeaderTrack: Color(0x33FFFFFF),
+    track: AppPalette.line,
+    ringTrack: AppPalette.ring,
+    pattern: AppPalette.sand,
+    textSecondary: AppPalette.inkSoft,
+    textMuted: AppPalette.inkMute,
+    textSubtle: AppPalette.inkMute,
+    success: AppPalette.green700,
+    successContainer: AppPalette.green100,
     danger: AppPalette.red600,
-    shadow: Color(0x1A000000),
+    shadow: Color(0x14000000),
   );
 
   static const dark = AppColorTokens(
-    brand: AppPalette.green600,
-    accent: AppPalette.green600,
-    accentContainer: AppPalette.greenDarker,
-    onAccentContainer: AppPalette.green200,
+    brand: AppPalette.green400,
+    accent: AppPalette.green400,
+    gold: AppPalette.gold400,
+    onGold: AppPalette.green900,
+    accentContainer: AppPalette.greenDarkSurface,
+    onAccentContainer: AppPalette.greenMintInk,
     header: AppPalette.green900,
-    onHeader: AppPalette.neutral0,
-    onHeaderMuted: Color(0xB3FFFFFF),
-    onHeaderTrack: Color(0x3DFFFFFF),
-    track: AppPalette.greenDark,
-    textMuted: Color(0x99FFFFFF),
-    textSubtle: Color(0x73FFFFFF),
-    success: AppPalette.success300,
-    successContainer: AppPalette.success900,
+    onHeader: AppPalette.white,
+    onHeaderMuted: AppPalette.greenMist,
+    onHeaderTrack: Color(0x33FFFFFF),
+    track: AppPalette.nightLine,
+    ringTrack: AppPalette.nightRing,
+    pattern: AppPalette.sandDark,
+    textSecondary: AppPalette.moonSoft,
+    textMuted: AppPalette.moonMute,
+    textSubtle: AppPalette.moonMute,
+    success: AppPalette.green400,
+    successContainer: AppPalette.greenDarkSurface,
     danger: AppPalette.red300,
     shadow: Color(0x40000000),
   );
@@ -121,6 +163,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   AppColorTokens copyWith({
     Color? brand,
     Color? accent,
+    Color? gold,
+    Color? onGold,
     Color? accentContainer,
     Color? onAccentContainer,
     Color? header,
@@ -128,6 +172,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? onHeaderMuted,
     Color? onHeaderTrack,
     Color? track,
+    Color? ringTrack,
+    Color? pattern,
+    Color? textSecondary,
     Color? textMuted,
     Color? textSubtle,
     Color? success,
@@ -138,6 +185,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     return AppColorTokens(
       brand: brand ?? this.brand,
       accent: accent ?? this.accent,
+      gold: gold ?? this.gold,
+      onGold: onGold ?? this.onGold,
       accentContainer: accentContainer ?? this.accentContainer,
       onAccentContainer: onAccentContainer ?? this.onAccentContainer,
       header: header ?? this.header,
@@ -145,6 +194,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       onHeaderMuted: onHeaderMuted ?? this.onHeaderMuted,
       onHeaderTrack: onHeaderTrack ?? this.onHeaderTrack,
       track: track ?? this.track,
+      ringTrack: ringTrack ?? this.ringTrack,
+      pattern: pattern ?? this.pattern,
+      textSecondary: textSecondary ?? this.textSecondary,
       textMuted: textMuted ?? this.textMuted,
       textSubtle: textSubtle ?? this.textSubtle,
       success: success ?? this.success,
@@ -157,24 +209,28 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   @override
   AppColorTokens lerp(AppColorTokens? other, double t) {
     if (other == null) return this;
+    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
     return AppColorTokens(
-      brand: Color.lerp(brand, other.brand, t)!,
-      accent: Color.lerp(accent, other.accent, t)!,
-      accentContainer: Color.lerp(accentContainer, other.accentContainer, t)!,
-      onAccentContainer:
-          Color.lerp(onAccentContainer, other.onAccentContainer, t)!,
-      header: Color.lerp(header, other.header, t)!,
-      onHeader: Color.lerp(onHeader, other.onHeader, t)!,
-      onHeaderMuted: Color.lerp(onHeaderMuted, other.onHeaderMuted, t)!,
-      onHeaderTrack: Color.lerp(onHeaderTrack, other.onHeaderTrack, t)!,
-      track: Color.lerp(track, other.track, t)!,
-      textMuted: Color.lerp(textMuted, other.textMuted, t)!,
-      textSubtle: Color.lerp(textSubtle, other.textSubtle, t)!,
-      success: Color.lerp(success, other.success, t)!,
-      successContainer:
-          Color.lerp(successContainer, other.successContainer, t)!,
-      danger: Color.lerp(danger, other.danger, t)!,
-      shadow: Color.lerp(shadow, other.shadow, t)!,
+      brand: l(brand, other.brand),
+      accent: l(accent, other.accent),
+      gold: l(gold, other.gold),
+      onGold: l(onGold, other.onGold),
+      accentContainer: l(accentContainer, other.accentContainer),
+      onAccentContainer: l(onAccentContainer, other.onAccentContainer),
+      header: l(header, other.header),
+      onHeader: l(onHeader, other.onHeader),
+      onHeaderMuted: l(onHeaderMuted, other.onHeaderMuted),
+      onHeaderTrack: l(onHeaderTrack, other.onHeaderTrack),
+      track: l(track, other.track),
+      ringTrack: l(ringTrack, other.ringTrack),
+      pattern: l(pattern, other.pattern),
+      textSecondary: l(textSecondary, other.textSecondary),
+      textMuted: l(textMuted, other.textMuted),
+      textSubtle: l(textSubtle, other.textSubtle),
+      success: l(success, other.success),
+      successContainer: l(successContainer, other.successContainer),
+      danger: l(danger, other.danger),
+      shadow: l(shadow, other.shadow),
     );
   }
 }

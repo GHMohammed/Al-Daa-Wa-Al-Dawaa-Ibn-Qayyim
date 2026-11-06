@@ -1,11 +1,17 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/lesson_card.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/progress_circle.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 /// شاشة إحصاءات التقدم في الكتاب
 class ProgressScreen extends ConsumerWidget {
@@ -19,125 +25,131 @@ class ProgressScreen extends ConsumerWidget {
     final hours = ref.watch(totalHoursProvider);
     final recent = ref.watch(recentProgressProvider);
     final last = recent.isNotEmpty ? recent.first : null;
+    final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
-              decoration: BoxDecoration(
-                color: context.colors.header,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: StatusBarScrim(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const PageHeader(
+                title: 'تقدمك',
+                subtitle: 'ما أنجزته من شرح الكتاب',
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Center(child: ProgressCircle(progress: overall, size: 170)),
+              const SizedBox(height: AppSpacing.xl),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: AppSpacing.sm,
+                  crossAxisSpacing: AppSpacing.sm,
+                  childAspectRatio: 1.45,
+                  children: [
+                    _StatCard(
+                      title: 'الدروس المكتملة',
+                      value: '$completed من ${AppConstants.totalLessons}',
+                      icon: Icons.check_circle_outline_rounded,
+                    ),
+                    _StatCard(
+                      title: 'ساعات الاستماع',
+                      value: hours.toStringAsFixed(1),
+                      icon: Icons.headphones_outlined,
+                    ),
+                    _StatCard(
+                      title: 'الدروس المحفوظة',
+                      value: '$downloaded',
+                      icon: Icons.download_done_rounded,
+                    ),
+                    _StatCard(
+                      title: 'آخر موضع',
+                      value: last != null
+                          ? AppConstants.formatSeconds(last.position)
+                          : '—',
+                      icon: Icons.history_rounded,
+                    ),
+                  ],
                 ),
               ),
-              child: Text(
-                'تقدمك في الكتاب',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: context.colors.onHeader,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.xl,
+                  AppSpacing.lg,
+                  AppSpacing.xxs,
                 ),
+                child: Text('استمعت إليها مؤخراً', style: text.titleMedium),
               ),
-            ),
-            const SizedBox(height: 24),
-            ProgressCircle(progress: overall, size: 180),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                // 1.2 بدلاً من 1.4 — يعطي البطاقة ~132dp ارتفاعاً بدل ~113dp
-                // يحل overflow خط Cairo الأطول من الافتراضي
-                childAspectRatio: 1.2,
-                children: [
-                  _StatCard(
-                    title: 'الدروس المكتملة',
-                    value: '$completed / ${AppConstants.totalLessons}',
-                    icon: Icons.check_circle_outline,
-                  ),
-                  _StatCard(
-                    title: 'ساعات الاستماع',
-                    value: hours.toStringAsFixed(1),
-                    icon: Icons.headphones,
-                  ),
-                  _StatCard(
-                    title: 'الدروس المحمّلة',
-                    value: '$downloaded',
-                    icon: Icons.download_done,
-                  ),
-                  _StatCard(
-                    title: 'آخر جلسة',
-                    value: last != null
-                        ? AppConstants.formatSeconds(last.position)
-                        : '—',
-                    icon: Icons.history,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'آخر الدروس المستمَع إليها',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ref.watch(lessonsProvider).when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                  data: (lessons) {
-                    final lessonMap = {
-                      for (final l in lessons) l.lesson.id: l.lesson.title,
-                    };
-                    if (recent.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('لم تبدأ الاستماع بعد'),
-                      );
-                    }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: recent.length.clamp(0, 10),
-                      itemBuilder: (_, i) {
-                        final p = recent[i];
-                        final title =
-                            lessonMap[p.lessonId] ?? 'درس ${p.lessonId}';
-                        return ListTile(
-                          leading: CircularProgressIndicator(
-                            value: p.percentage,
-                            strokeWidth: 2,
-                          ),
-                          title: Text(title),
-                          subtitle: Text(
-                            '${(p.percentage * 100).toStringAsFixed(0)}% • ${AppConstants.formatSeconds(p.position)}',
+              ref.watch(lessonsProvider).when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (lessons) {
+                      final byId = {
+                        for (final l in lessons) l.lesson.id: l.lesson
+                      };
+                      if (recent.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.all(AppSpacing.xl),
+                          child: Text(
+                            'ابدأ الاستماع لأول درس وسيظهر تقدمك هنا',
+                            textAlign: TextAlign.center,
+                            style: text.bodyMedium
+                                ?.copyWith(color: colors.textMuted),
                           ),
                         );
-                      },
-                    );
-                  },
-                ),
-            const SizedBox(height: 80),
-          ],
+                      }
+                      return Column(
+                        children: [
+                          for (final p in recent.take(10))
+                            if (byId[p.lessonId] case final lesson?)
+                              ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg - 2,
+                                ),
+                                leading: LessonNumberRing(
+                                  number: lesson.id,
+                                  state: isProgressCompleted(p)
+                                      ? LessonState.completed
+                                      : LessonState.inProgress,
+                                  progress: p.percentage,
+                                ),
+                                title: Text(
+                                  lesson.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.bodyMedium,
+                                ),
+                                subtitle: Text(
+                                  isProgressCompleted(p)
+                                      ? 'مكتمل'
+                                      : 'استمعت ${(p.percentage * 100).round()}%، توقفت عند ${AppConstants.formatSeconds(p.position)}',
+                                  style: text.labelMedium
+                                      ?.copyWith(color: colors.textMuted),
+                                ),
+                                onTap: () {
+                                  ref
+                                      .read(playerProvider.notifier)
+                                      .play(lesson);
+                                  context.push('/player/${lesson.id}');
+                                },
+                              ),
+                        ],
+                      );
+                    },
+                  ),
+              const SizedBox(height: AppSpacing.xl),
+            ],
+          ),
         ),
+        bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
 }
@@ -156,33 +168,33 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final text = Theme.of(context).textTheme;
     return Card(
       child: Padding(
-        // padding مخفّض لإعطاء مزيد من المساحة للمحتوى
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.all(AppSpacing.sm + 2),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: colors.brand, size: 26),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colors.brand,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: colors.textMuted),
-              // maxLines:1 يمنع التفاف العنوان إلى سطرين ويحل الـ overflow
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            Icon(icon, color: colors.brand, size: 22),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleLarge?.copyWith(
+                    fontWeight: AppTypography.medium,
+                  ),
+                ),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.labelMedium?.copyWith(color: colors.textMuted),
+                ),
+              ],
             ),
           ],
         ),

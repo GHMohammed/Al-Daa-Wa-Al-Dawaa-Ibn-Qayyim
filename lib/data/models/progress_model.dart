@@ -13,9 +13,8 @@ class ProgressModel {
     required this.lastPlayed,
   });
 
-  double get percentage => totalDuration > 0
-      ? (position / totalDuration).clamp(0.0, 1.0)
-      : 0.0;
+  double get percentage =>
+      totalDuration > 0 ? (position / totalDuration).clamp(0.0, 1.0) : 0.0;
 
   factory ProgressModel.fromJson(Map<String, dynamic> json) => ProgressModel(
         lessonId: json['lesson_id'] as int,

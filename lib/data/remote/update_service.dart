@@ -41,8 +41,8 @@ class UpdateService {
 
       final map = json.decode(body) as Map<String, dynamic>;
       final remoteVersion = (map['version'] as String?)?.trim() ?? '';
-      final apkUrl       = (map['apk_url']  as String?)?.trim() ?? '';
-      final notes        = (map['notes']    as String?)?.trim() ?? '';
+      final apkUrl = (map['apk_url'] as String?)?.trim() ?? '';
+      final notes = (map['notes'] as String?)?.trim() ?? '';
 
       if (remoteVersion.isEmpty) return null;
       if (!_isNewer(remoteVersion, AppConstants.appVersion)) return null;

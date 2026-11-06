@@ -7,34 +7,37 @@ class AppBottomNav extends StatelessWidget {
 
   final int currentIndex;
 
+  static const _routes = ['/', '/progress', '/settings'];
+
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            if (currentIndex != 0) context.go('/');
-          case 1:
-            if (currentIndex != 1) context.go('/progress');
-          case 2:
-            if (currentIndex != 2) context.go('/settings');
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'الرئيسية',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.insights),
-          label: 'التقدم',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'الإعدادات',
-        ),
-      ],
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+      ),
+      child: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
+          if (index != currentIndex) context.go(_routes[index]);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.headphones_outlined),
+            selectedIcon: Icon(Icons.headphones_rounded),
+            label: 'الدروس',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights_rounded),
+            label: 'التقدم',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: 'الإعدادات',
+          ),
+        ],
+      ),
     );
   }
 }

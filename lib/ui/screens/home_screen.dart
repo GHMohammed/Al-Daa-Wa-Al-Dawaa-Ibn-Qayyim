@@ -1,146 +1,390 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
-import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/home_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/lesson_card.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/mini_player.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-/// الشاشة الرئيسية — قائمة الدروس والتقدم العام
+/// الشاشة الرئيسية — الإنجاز، «أكمل الاستماع»، وقائمة الدروس
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lessonsAsync = ref.watch(lessonsProvider);
-    final overall = ref.watch(overallProgressProvider);
-    final completed = ref.watch(completedCountProvider);
-    final percent = (overall * 100).toStringAsFixed(0);
-    const total = AppConstants.totalLessons;
+    final lessonsAsync = ref.watch(filteredLessonsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Column(
-        children: [
-          // AnnotatedRegion يضمن أن أيقونات status bar تبقى بيضاء
-          // فوق الهيدر الأخضر بغض النظر عن إعداد ThemeMode
-          AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle.light,
-            child: _Header(
-              progress: overall,
-              percent: percent,
-              completed: completed,
-              total: total,
-            ),
-          ),
-          Expanded(
-            child: lessonsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Text('تعذّر تحميل الدروس: $e'),
-              ),
-              data: (lessons) => ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        body: StatusBarScrim(
+          child: Column(
+            children: [
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    const SliverToBoxAdapter(child: _Header()),
+                    const SliverToBoxAdapter(child: _ContinueCard()),
+                    const SliverToBoxAdapter(child: _LessonsHeader()),
+                    ...lessonsAsync.when(
+                      loading: () => const [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSpacing.xxl),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        ),
+                      ],
+                      error: (e, _) => [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.xl),
+                            child: Text('تعذّر تحميل الدروس: $e'),
+                          ),
+                        ),
+                      ],
+                      data: (lessons) => [
+                        if (lessons.isEmpty)
+                          const SliverToBoxAdapter(child: _EmptyFilter())
+                        else
+                          SliverList.builder(
+                            itemCount: lessons.length,
+                            itemBuilder: (_, i) =>
+                                LessonCard(lesson: lessons[i]),
+                          ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.md),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                itemCount: lessons.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (_, i) => LessonCard(item: lessons[i]),
               ),
-            ),
+              const MiniPlayer(),
+            ],
           ),
-          const MiniPlayer(),
-        ],
+        ),
+        bottomNavigationBar: const AppBottomNav(currentIndex: 0),
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 }
 
-class _Header extends StatelessWidget {
-  const _Header({
-    required this.progress,
-    required this.percent,
-    required this.completed,
-    required this.total,
-  });
-
-  final double progress;
-  final String percent;
-  final int completed;
-  final int total;
+/// رأس الصفحة: الاسم والإنجاز فوق زخرفة باهتة تتلاشى نحو الأسفل
+class _Header extends ConsumerWidget {
+  const _Header();
 
   @override
-  Widget build(BuildContext context) {
-    // Container خارجي بدون borderRadius يمتد خلف الـ status bar بالكامل
-    // SafeArea(bottom: false) يدفع المحتوى أسفل الـ status bar
-    // Container داخلي يرسم الزوايا الدائرية في الأسفل فقط
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    return Container(
-      color: colors.header,
-      child: SafeArea(
-        bottom: false,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.only(
-            top: 16,
-            bottom: 20,
-            left: 20,
-            right: 20,
-          ),
-          decoration: BoxDecoration(
-            color: colors.header,
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(24),
-              bottomRight: Radius.circular(24),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final text = Theme.of(context).textTheme;
+    final completed = ref.watch(completedCountProvider);
+    final overall = ref.watch(overallProgressProvider);
+
+    return PageHeader(
+      title: 'الداء والدواء',
+      subtitle: 'شرح الشيخ ${AppConstants.sheikhName}',
+      child: Column(
+        children: [
+          Row(
             children: [
-              Text(
-                AppConstants.appTitle,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: colors.onHeader,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppConstants.sheikhName,
-                style: TextStyle(color: colors.onHeaderMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress.clamp(0, 1),
-                  minHeight: 6,
-                  backgroundColor: colors.onHeaderTrack,
-                  color: colors.accent,
+              Expanded(
+                child: Text(
+                  'إنجازك في الكتاب',
+                  style:
+                      text.labelMedium?.copyWith(color: colors.textSecondary),
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'إنجاز الكتاب $percent%',
-                    style: TextStyle(color: colors.onHeader, fontSize: 13),
-                  ),
-                  Text(
-                    '$completed من $total درس',
-                    style: TextStyle(color: colors.onHeader, fontSize: 13),
-                  ),
-                ],
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$completed',
+                      style: TextStyle(
+                        color: colors.brand,
+                        fontWeight: AppTypography.medium,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' من ${AppConstants.totalLessons} درساً',
+                    ),
+                  ],
+                ),
+                style: text.labelMedium?.copyWith(color: colors.textSecondary),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: overall.clamp(0.0, 1.0),
+              minHeight: 4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// بطاقة «أكمل الاستماع» — الدرس الحالي أو آخر درس لم يكتمل
+class _ContinueCard extends ConsumerWidget {
+  const _ContinueCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final item = ref.watch(continueLessonProvider);
+    if (item == null) return const SizedBox(height: AppSpacing.xs);
+
+    final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+    final player = ref.watch(playerProvider);
+    final isCurrent = player.currentLesson?.id == item.lesson.id;
+    final isPlaying = isCurrent && player.status == PlayerStatus.playing;
+
+    // الموضع الحي من المشغّل إن كان هذا الدرس محمّلاً، وإلا المحفوظ
+    final position = isCurrent
+        ? player.position
+        : Duration(seconds: item.progress?.position ?? 0);
+    final total = isCurrent && player.duration > Duration.zero
+        ? player.duration
+        : Duration(
+            seconds: item.progress?.totalDuration ?? item.lesson.duration,
+          );
+    final fraction = total.inMilliseconds > 0
+        ? (position.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+    final remainingMin = ((total - position).inSeconds / 60).ceil();
+    final fresh = position == Duration.zero;
+
+    void openPlayer() {
+      if (!isCurrent) ref.read(playerProvider.notifier).play(item.lesson);
+      context.push('/player/${item.lesson.id}');
+    }
+
+    void togglePlay() {
+      final notifier = ref.read(playerProvider.notifier);
+      if (isCurrent) {
+        notifier.togglePlayPause();
+      } else {
+        notifier.play(item.lesson);
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.xxs,
+      ),
+      child: Material(
+        color: colors.header,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: openPlayer,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: IslamicPattern(
+                  color: colors.gold.withValues(alpha: 0.2),
+                  cellSize: 46,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${fresh ? 'ابدأ الاستماع' : 'أكمل الاستماع'}، الدرس ${item.lesson.id}',
+                      style: text.labelMedium
+                          ?.copyWith(color: colors.onHeaderMuted),
+                    ),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      item.lesson.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleMedium?.copyWith(color: colors.onHeader),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      children: [
+                        Material(
+                          color: colors.gold,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: togglePlay,
+                            child: SizedBox.square(
+                              dimension: AppSizes.minTapTarget,
+                              child: Icon(
+                                isPlaying
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded,
+                                color: colors.onGold,
+                                size: 26,
+                                semanticLabel:
+                                    isPlaying ? 'إيقاف مؤقت' : 'تشغيل',
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: LinearProgressIndicator(
+                                  value: fraction,
+                                  minHeight: 3,
+                                  color: colors.gold,
+                                  backgroundColor: colors.onHeaderTrack,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs - 2),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppConstants.formatDuration(position),
+                                    style: text.labelSmall?.copyWith(
+                                      color: colors.onHeaderMuted,
+                                    ),
+                                  ),
+                                  Text(
+                                    fresh
+                                        ? '${(total.inSeconds / 60).round()} دقيقة'
+                                        : 'بقي $remainingMin دقيقة',
+                                    style: text.labelSmall?.copyWith(
+                                      color: colors.onHeaderMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// عنوان «الدروس» مع قائمة التصفية
+class _LessonsHeader extends ConsumerWidget {
+  const _LessonsHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+    final filter = ref.watch(lessonFilterProvider);
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.xs,
+        0,
+      ),
+      child: Row(
+        children: [
+          Expanded(child: Text('الدروس', style: text.titleMedium)),
+          PopupMenuButton<LessonFilter>(
+            initialValue: filter,
+            tooltip: 'تصفية الدروس',
+            onSelected: (f) =>
+                ref.read(lessonFilterProvider.notifier).state = f,
+            itemBuilder: (_) => [
+              for (final f in LessonFilter.values)
+                PopupMenuItem(value: f, child: Text(f.label)),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    filter.label,
+                    style: text.labelMedium?.copyWith(
+                      color: filter == LessonFilter.all
+                          ? colors.textMuted
+                          : colors.brand,
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: colors.textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilter extends ConsumerWidget {
+  const _EmptyFilter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(lessonFilterProvider);
+    final message = switch (filter) {
+      LessonFilter.inProgress => 'لا يوجد درس قيد الاستماع',
+      LessonFilter.completed => 'لم تُكمل أي درس بعد',
+      LessonFilter.downloaded => 'لم تحفظ أي درس للاستماع دون إنترنت',
+      LessonFilter.all => 'لا توجد دروس',
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.xxl,
+      ),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: context.colors.textMuted),
+          ),
+          TextButton(
+            onPressed: () => ref.read(lessonFilterProvider.notifier).state =
+                LessonFilter.all,
+            child: const Text('عرض كل الدروس'),
+          ),
+        ],
       ),
     );
   }
