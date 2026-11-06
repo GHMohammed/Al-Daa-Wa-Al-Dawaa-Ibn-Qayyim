@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-/// مشغّل مصغّر في أسفل الشاشة الرئيسية
+/// مشغّل مصغّر عائم فوق شريط التنقل
 class MiniPlayer extends ConsumerWidget {
   const MiniPlayer({super.key});
 
@@ -17,94 +17,97 @@ class MiniPlayer extends ConsumerWidget {
 
     final lesson = player.currentLesson!;
     final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+    final playing = player.status == PlayerStatus.playing;
+    final fraction = player.duration.inMilliseconds > 0
+        ? (player.position.inMilliseconds / player.duration.inMilliseconds)
+            .clamp(0.0, 1.0)
+        : 0.0;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.header,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow,
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xs,
+        0,
+        AppSpacing.xs,
+        AppSpacing.xs,
       ),
       child: Material(
-        color: Colors.transparent,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
+        color: colors.header,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
           onTap: () => context.push('/player/${lesson.id}'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                // أيقونة الموسيقى داخل Container دائري
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: colors.onHeaderTrack,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.music_note_rounded,
-                    color: colors.onHeader,
-                    size: 24,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(
+                  AppSpacing.sm,
+                  AppSpacing.xs,
+                  AppSpacing.xxs,
+                  AppSpacing.xs,
                 ),
-                const SizedBox(width: 12),
-                // عنوان الدرس + الوقت الحالي
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        lesson.title,
-                        style: TextStyle(
-                          color: colors.onHeader,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.gold, width: 1.2),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        AppConstants.formatDuration(player.position),
-                        style: TextStyle(
-                          color: colors.onHeaderMuted,
-                          fontSize: 12,
+                      child: Text(
+                        '${lesson.id}',
+                        style: text.labelMedium?.copyWith(
+                          color: colors.gold,
+                          fontWeight: AppTypography.medium,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            lesson.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.bodyMedium
+                                ?.copyWith(color: colors.onHeader),
+                          ),
+                          Text(
+                            AppConstants.formatDuration(player.position),
+                            style: text.labelSmall
+                                ?.copyWith(color: colors.onHeaderMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        playing
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: colors.onHeader,
+                        size: 30,
+                      ),
+                      tooltip: playing ? 'إيقاف مؤقت' : 'تشغيل',
+                      onPressed: () =>
+                          ref.read(playerProvider.notifier).togglePlayPause(),
+                    ),
+                  ],
                 ),
-                // زر تشغيل / إيقاف
-                IconButton(
-                  icon: Icon(
-                    player.status == PlayerStatus.playing
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    color: colors.onHeader,
-                    size: 28,
-                  ),
-                  onPressed: () =>
-                      ref.read(playerProvider.notifier).togglePlayPause(),
-                ),
-              ],
-            ),
+              ),
+              LinearProgressIndicator(
+                value: fraction,
+                minHeight: 2,
+                color: colors.gold,
+                backgroundColor: colors.onHeaderTrack,
+              ),
+            ],
           ),
         ),
       ),

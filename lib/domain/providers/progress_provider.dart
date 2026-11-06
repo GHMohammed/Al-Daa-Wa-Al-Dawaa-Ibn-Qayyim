@@ -28,11 +28,15 @@ class ProgressNotifier extends StateNotifier<Map<int, ProgressModel>> {
   }
 }
 
-bool _isCompleted(ProgressModel p) =>
+bool isProgressCompleted(ProgressModel p) =>
     p.completed || AppConstants.isLessonCompleted(p.position, p.totalDuration);
 
 final completedCountProvider = Provider<int>((ref) {
-  return ref.watch(progressMapProvider).values.where(_isCompleted).length;
+  return ref
+      .watch(progressMapProvider)
+      .values
+      .where(isProgressCompleted)
+      .length;
 });
 
 final overallProgressProvider = Provider<double>((ref) {

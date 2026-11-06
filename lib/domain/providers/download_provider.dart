@@ -72,9 +72,8 @@ class DownloadNotifier extends StateNotifier<Map<int, DownloadStatus>> {
     final map = <int, DownloadStatus>{};
     for (final id in lessonIds) {
       final downloaded = await DownloadManager.instance.isDownloaded(id);
-      map[id] = downloaded
-          ? DownloadStatus.downloaded
-          : DownloadStatus.notDownloaded;
+      map[id] =
+          downloaded ? DownloadStatus.downloaded : DownloadStatus.notDownloaded;
     }
     state = map;
   }

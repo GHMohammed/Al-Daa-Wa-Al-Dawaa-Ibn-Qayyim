@@ -159,9 +159,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
       final saved = await DatabaseHelper.instance.getProgress(lesson.id);
       final start = startPosition ??
-          (saved != null
-              ? Duration(seconds: saved.position)
-              : Duration.zero);
+          (saved != null ? Duration(seconds: saved.position) : Duration.zero);
 
       final uri = await _resolveUri(lesson);
       await _handler.setLessonSource(

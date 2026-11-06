@@ -21,9 +21,10 @@ class AppConstants {
   static const int positionSaveIntervalSeconds = 5;
   static const int skipSeconds = 30;
 
-  static const List<double> playbackSpeeds = [0.75, 1.0, 1.25, 1.5, 2.0];
+  static const List<double> playbackSpeeds = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 
   static const String dbName = 'al_daa_wal_dawaa.db';
+
   /// v1: progress, downloads — v2: bookmarks, notes
   static const int dbVersion = 2;
 
