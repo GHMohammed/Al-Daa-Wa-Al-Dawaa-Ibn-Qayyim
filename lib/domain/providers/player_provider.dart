@@ -185,7 +185,10 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     final total = state.duration.inSeconds > 0
         ? state.duration.inSeconds
         : lesson.duration;
-    final completed = AppConstants.isLessonCompleted(position, total);
+    // الإكمال لا يُسحب: إعادة الاستماع لدرس مكتمل من أوله تُبقيه مكتملاً
+    final previous = _ref.read(progressMapProvider)[lesson.id];
+    final completed = (previous != null && isProgressCompleted(previous)) ||
+        AppConstants.isLessonCompleted(position, total);
 
     final progress = ProgressModel(
       lessonId: lesson.id,

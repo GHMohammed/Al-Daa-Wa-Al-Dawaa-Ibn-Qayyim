@@ -256,7 +256,7 @@ class _SleepTimerButton extends ConsumerWidget {
     return TextButton.icon(
       onPressed: () => _showSleepTimerSheet(context, ref),
       style: TextButton.styleFrom(
-        foregroundColor: colors.gold,
+        foregroundColor: colors.goldInk,
         minimumSize: const Size(0, AppSizes.minTapTarget),
       ),
       icon: const Icon(Icons.bedtime_rounded, size: 20),

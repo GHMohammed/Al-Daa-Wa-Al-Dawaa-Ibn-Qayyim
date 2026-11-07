@@ -219,7 +219,7 @@ class AnnotationTile extends ConsumerWidget {
                         ? Icons.edit_note_rounded
                         : Icons.bookmark_rounded,
                 size: 19,
-                color: item.isNote ? colors.onAccentContainer : colors.gold,
+                color: item.isNote ? colors.onAccentContainer : colors.goldInk,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -252,7 +252,7 @@ class AnnotationTile extends ConsumerWidget {
                   Text(
                     when,
                     style: text.labelMedium?.copyWith(
-                      color: item.isNote ? colors.brand : colors.gold,
+                      color: item.isNote ? colors.brand : colors.goldInk,
                     ),
                   ),
                 ],
