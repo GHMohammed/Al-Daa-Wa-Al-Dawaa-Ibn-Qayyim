@@ -118,10 +118,14 @@ class _ReaderState extends ConsumerState<_Reader> {
   late final ValueNotifier<int> _top;
   Timer? _saveDebounce;
 
+  /// يُؤخذ مرة عند الفتح: ref ممنوع داخل dispose، وفيه نحفظ آخر موضع
+  late final ReadingPositionNotifier _position;
+
   @override
   void initState() {
     super.initState();
     _top = ValueNotifier(widget.index.indexOf(widget.initial));
+    _position = ref.read(readingPositionProvider.notifier);
     _positions.itemPositions.addListener(_onScroll);
   }
 
@@ -136,9 +140,7 @@ class _ReaderState extends ConsumerState<_Reader> {
     _saveDebounce = Timer(const Duration(milliseconds: 600), _save);
   }
 
-  void _save() => ref
-      .read(readingPositionProvider.notifier)
-      .save(widget.index.positionAt(_top.value));
+  void _save() => _position.save(widget.index.positionAt(_top.value));
 
   void _jumpTo(int itemIndex) {
     _scroll.jumpTo(index: itemIndex);
@@ -149,7 +151,10 @@ class _ReaderState extends ConsumerState<_Reader> {
   @override
   void dispose() {
     _saveDebounce?.cancel();
-    _save();
+    // تعديل حالة مزوّد أثناء إغلاق الشجرة ممنوع، فنحفظ بعد انتهاء الإطار؛
+    // الموضع نفسه يُحسب الآن قبل التخلص من _top
+    final last = widget.index.positionAt(_top.value);
+    Future.microtask(() => _position.save(last));
     _positions.itemPositions.removeListener(_onScroll);
     _top.dispose();
     super.dispose();
