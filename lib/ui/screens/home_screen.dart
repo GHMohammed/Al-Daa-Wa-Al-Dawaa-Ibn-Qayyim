@@ -1,6 +1,9 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
+import 'package:al_daa_wal_dawaa/core/utils/arabic_text.dart';
+import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/home_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
@@ -308,6 +311,20 @@ class _LessonsHeader extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(child: Text('الدروس', style: text.titleMedium)),
+          IconButton(
+            icon: const Icon(Icons.search_rounded),
+            color: colors.textMuted,
+            tooltip: 'ابحث في الدروس',
+            onPressed: () {
+              final lessons = ref.read(lessonsProvider).valueOrNull;
+              if (lessons == null) return;
+              showSearch<void>(
+                context: context,
+                delegate:
+                    LessonSearchDelegate([for (final l in lessons) l.lesson]),
+              );
+            },
+          ),
           PopupMenuButton<LessonFilter>(
             initialValue: filter,
             tooltip: 'تصفية الدروس',
@@ -382,6 +399,94 @@ class _EmptyFilter extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// يطابق الدروس بالعنوان (بعد توحيد الهمزات والتشكيل) أو برقم الدرس
+List<LessonModel> searchLessons(List<LessonModel> lessons, String query) {
+  final q = query.trim();
+  if (q.isEmpty) return const [];
+  final number = int.tryParse(q);
+  if (number != null) return lessons.where((l) => l.id == number).toList();
+  final words = normalizeArabic(q).split(RegExp(r'\s+'));
+  return lessons.where((l) {
+    final title = normalizeArabic(l.title);
+    return words.every(title.contains);
+  }).toList();
+}
+
+class LessonSearchDelegate extends SearchDelegate<void> {
+  LessonSearchDelegate(this.lessons)
+      : super(
+          searchFieldLabel: 'عنوان الدرس أو رقمه',
+          keyboardType: TextInputType.text,
+        );
+
+  final List<LessonModel> lessons;
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      inputDecorationTheme: const InputDecorationTheme(
+        border: InputBorder.none,
+      ),
+    );
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        if (query.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: 'مسح',
+            onPressed: () => query = '',
+          ),
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_forward_rounded),
+        tooltip: 'رجوع',
+        onPressed: () => close(context, null),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _results(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _results(context);
+
+  Widget _results(BuildContext context) {
+    final muted = Theme.of(context)
+        .textTheme
+        .bodyMedium
+        ?.copyWith(color: context.colors.textMuted);
+    if (query.trim().isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Text(
+          'اكتب كلمة من عنوان الدرس، مثل: الدعاء، الذنوب — أو رقمه',
+          textAlign: TextAlign.center,
+          style: muted,
+        ),
+      );
+    }
+    final hits = searchLessons(lessons, query);
+    if (hits.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Text(
+          'لا يوجد درس يطابق «$query»',
+          textAlign: TextAlign.center,
+          style: muted,
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      itemCount: hits.length,
+      itemBuilder: (_, i) => LessonCard(lesson: hits[i]),
     );
   }
 }

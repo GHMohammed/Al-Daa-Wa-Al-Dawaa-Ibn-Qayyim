@@ -11,8 +11,11 @@ import 'package:al_daa_wal_dawaa/data/services/app_audio_handler.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/listening_stats.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/settings_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/sleep_timer_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart' show ProcessingState;
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum PlayerStatus { idle, loading, playing, paused, error }
@@ -93,14 +96,19 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   late final AppAudioHandler _handler;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlaybackState>? _playbackSub;
+  StreamSubscription<ProcessingState>? _completionSub;
 
   /// ثوانٍ استُمع إليها فعلاً (وقت حقيقي) ولم تُحفظ في السجل اليومي بعد
   Timer? _listenTicker;
   int _pendingListen = 0;
 
   void _tick() {
-    // توقف من أي مكان (الإشعار، نهاية الدرس…): نحفظ ما تجمّع
-    if (!_handler.player.playing) return _flushListening();
+    // توقف من أي مكان (الإشعار، نهاية الدرس، انتظار التحميل…): نحفظ ما تجمّع.
+    // just_audio يُبقي playing صحيحاً بعد انتهاء الملف، فنشترط ready أيضاً
+    final player = _handler.player;
+    if (!player.playing || player.processingState != ProcessingState.ready) {
+      return _flushListening();
+    }
     if (++_pendingListen >= 30) _flushListening();
   }
 
@@ -134,6 +142,30 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
         position: playbackState.updatePosition,
       );
     });
+
+    _completionSub = _handler.player.processingStateStream
+        .where((s) => s == ProcessingState.completed)
+        .listen((_) => _onLessonCompleted());
+  }
+
+  /// انتهى الملف: نحفظه مكتملاً، ثم نشغّل التالي ما لم يمنع ذلك
+  /// مؤقتُ «نهاية الدرس» أو إعدادُ التشغيل التلقائي
+  Future<void> _onLessonCompleted() async {
+    if (state.currentLesson == null) return;
+    _flushListening();
+    state = state.copyWith(position: state.duration);
+    await _saveCurrentProgress();
+    if (!mounted) return;
+
+    final sleep = _ref.read(sleepTimerProvider);
+    if (sleep != null && sleep.endOfLesson) {
+      _ref.read(sleepTimerProvider.notifier).cancel();
+    } else if (_ref.read(appSettingsProvider).autoplayNext) {
+      final next = await _neighbour(1);
+      if (next != null && mounted) return play(next);
+    }
+    await _handler.pause();
+    if (mounted) state = state.copyWith(status: PlayerStatus.paused);
   }
 
   void _maybeSaveProgress() {
@@ -191,8 +223,11 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       );
 
       final saved = await DatabaseHelper.instance.getProgress(lesson.id);
+      // الدرس المكتمل يُعاد من أوله (وإلا انتهى فوراً وقفز التشغيل التلقائي)
       final start = startPosition ??
-          (saved != null ? Duration(seconds: saved.position) : Duration.zero);
+          (saved != null && !isProgressCompleted(saved)
+              ? Duration(seconds: saved.position)
+              : Duration.zero);
 
       final uri = await _resolveUri(lesson);
       await _handler.setLessonSource(
@@ -226,6 +261,10 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   }
 
   Future<void> resume() async {
+    // درس انتهى: «تشغيل» يعيده من البداية
+    if (_handler.player.processingState == ProcessingState.completed) {
+      await _handler.seek(Duration.zero);
+    }
     await _handler.play();
     state = state.copyWith(status: PlayerStatus.playing);
   }
@@ -242,28 +281,32 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     await prefs.setDouble(_speedKey, speed);
   }
 
+  /// يستخدمه مؤقت النوم لخفض الصوت تدريجياً قبل الإيقاف
+  Future<void> setVolume(double volume) =>
+      _handler.player.setVolume(volume.clamp(0.0, 1.0));
+
   Future<void> skipForward30() => _handler.skipForward30();
 
   Future<void> skipBackward30() => _handler.skipBackward30();
 
-  Future<void> playNext() async {
+  /// الدرس المجاور للحالي (1 التالي، -1 السابق)، أو null عند الطرفين
+  Future<LessonModel?> _neighbour(int step) async {
     final current = state.currentLesson;
-    if (current == null) return;
+    if (current == null) return null;
     final lessons = await ArchiveService.instance.loadLessons();
-    final index = lessons.indexWhere((l) => l.id == current.id);
-    if (index >= 0 && index < lessons.length - 1) {
-      await play(lessons[index + 1]);
-    }
+    final index = lessons.indexWhere((l) => l.id == current.id) + step;
+    if (index < 0 || index >= lessons.length) return null;
+    return lessons[index];
+  }
+
+  Future<void> playNext() async {
+    final next = await _neighbour(1);
+    if (next != null) await play(next);
   }
 
   Future<void> playPrevious() async {
-    final current = state.currentLesson;
-    if (current == null) return;
-    final lessons = await ArchiveService.instance.loadLessons();
-    final index = lessons.indexWhere((l) => l.id == current.id);
-    if (index > 0) {
-      await play(lessons[index - 1]);
-    }
+    final previous = await _neighbour(-1);
+    if (previous != null) await play(previous);
   }
 
   Future<void> togglePlayPause() async {
@@ -281,6 +324,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       ..onSkipToPrevious = null;
     _positionSub?.cancel();
     _playbackSub?.cancel();
+    _completionSub?.cancel();
     _listenTicker?.cancel();
     _flushListening();
     _saveCurrentProgress();
