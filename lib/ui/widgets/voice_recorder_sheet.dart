@@ -67,7 +67,9 @@ class _RecorderSheetState extends ConsumerState<_RecorderSheet> {
   Duration _elapsed = Duration.zero;
   Timer? _ticker;
   StreamSubscription<Amplitude>? _ampSub;
-  final List<double> _levels = List.filled(_bars, 0);
+  // قابلة للتمدد: كل قراءة تُزيل الأقدم وتضيف الأحدث (List.filled وحدها
+  // ثابتة الطول فيفشل removeAt ويتجمد المؤشر)
+  final List<double> _levels = List.filled(_bars, 0, growable: true);
   bool _saved = false;
 
   Future<void> _start() async {
