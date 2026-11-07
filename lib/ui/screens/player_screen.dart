@@ -8,6 +8,7 @@ import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/sleep_timer_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/book_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
@@ -220,6 +221,7 @@ class _TopBar extends StatelessWidget {
                   ?.copyWith(color: colors.textMuted),
             ),
           ),
+          const _SleepTimerButton(),
           IconButton(
             icon: const Icon(Icons.format_list_bulleted_rounded),
             color: colors.textMuted,
@@ -230,6 +232,95 @@ class _TopBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// زر مؤقت النوم: أيقونة القمر، ومعها الوقت الباقي بالذهبي حين يعمل
+class _SleepTimerButton extends ConsumerWidget {
+  const _SleepTimerButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timer = ref.watch(sleepTimerProvider);
+    final colors = context.colors;
+    if (timer == null) {
+      return IconButton(
+        icon: const Icon(Icons.bedtime_outlined),
+        color: colors.textMuted,
+        tooltip: 'مؤقت النوم',
+        onPressed: () => _showSleepTimerSheet(context, ref),
+      );
+    }
+    final label = timer.endOfLesson
+        ? 'نهاية الدرس'
+        : AppConstants.formatDuration(timer.remaining!);
+    return TextButton.icon(
+      onPressed: () => _showSleepTimerSheet(context, ref),
+      style: TextButton.styleFrom(
+        foregroundColor: colors.gold,
+        minimumSize: const Size(0, AppSizes.minTapTarget),
+      ),
+      icon: const Icon(Icons.bedtime_rounded, size: 20),
+      label: Text(label),
+    );
+  }
+}
+
+void _showSleepTimerSheet(BuildContext context, WidgetRef ref) {
+  final notifier = ref.read(sleepTimerProvider.notifier);
+  final active = ref.read(sleepTimerProvider) != null;
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) {
+      void pick(VoidCallback action) {
+        action();
+        Navigator.pop(ctx);
+      }
+
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.xs,
+              ),
+              child: Text(
+                'إيقاف الاستماع بعد',
+                style: Theme.of(ctx).textTheme.titleMedium,
+              ),
+            ),
+            for (final minutes in const [15, 30, 45, 60])
+              ListTile(
+                leading: const Icon(Icons.timer_outlined),
+                title: Text('$minutes دقيقة'),
+                onTap: () =>
+                    pick(() => notifier.start(Duration(minutes: minutes))),
+              ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('نهاية الدرس الحالي'),
+              onTap: () => pick(notifier.startEndOfLesson),
+            ),
+            if (active)
+              ListTile(
+                leading: Icon(Icons.close_rounded, color: ctx.colors.danger),
+                title: Text(
+                  'إلغاء المؤقت',
+                  style: TextStyle(color: ctx.colors.danger),
+                ),
+                onTap: () => pick(notifier.cancel),
+              ),
+            const SizedBox(height: AppSpacing.xs),
+          ],
+        ),
+      );
+    },
+  );
 }
 
 /// غلاف الدرس: سطح أخضر عميق بزخرفة ذهبية، ورقم الدرس في دائرة بالوسط

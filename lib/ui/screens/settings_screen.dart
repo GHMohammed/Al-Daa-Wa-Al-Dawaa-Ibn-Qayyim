@@ -2,6 +2,7 @@ import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/settings_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +39,11 @@ class SettingsScreen extends StatelessWidget {
                     _SectionLabel(label: 'الكتاب'),
                     SizedBox(height: 8),
                     _BookCard(),
+                    SizedBox(height: 24),
+                    // ── الاستماع والمظهر ──────────────────────────────
+                    _SectionLabel(label: 'الاستماع والمظهر'),
+                    SizedBox(height: 8),
+                    _PreferencesCard(),
                     SizedBox(height: 24),
                     // ── القسم الثاني: إدارة التخزين ──────────────────
                     _SectionLabel(label: 'إدارة التخزين'),
@@ -193,6 +199,74 @@ class _BookCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// بطاقة الاستماع والمظهر
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PreferencesCard extends ConsumerWidget {
+  const _PreferencesCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(appSettingsProvider);
+    final notifier = ref.read(appSettingsProvider.notifier);
+    final mutedColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+
+    return _SettingsCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const _IconBox(icon: Icons.skip_next_rounded, size: 36),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'تشغيل الدرس التالي تلقائياً',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    Text(
+                      'عند انتهاء الدرس الحالي',
+                      style: TextStyle(fontSize: 12, color: mutedColor),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: settings.autoplayNext,
+                onChanged: notifier.setAutoplayNext,
+              ),
+            ],
+          ),
+          Divider(height: 24, color: Theme.of(context).dividerColor),
+          const Row(
+            children: [
+              _IconBox(icon: Icons.contrast_rounded, size: 36),
+              SizedBox(width: 12),
+              Text('المظهر', style: TextStyle(fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SegmentedButton<ThemeMode>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: ThemeMode.system, label: Text('حسب الجهاز')),
+              ButtonSegment(value: ThemeMode.light, label: Text('فاتح')),
+              ButtonSegment(value: ThemeMode.dark, label: Text('داكن')),
+            ],
+            selected: {settings.themeMode},
+            onSelectionChanged: (s) => notifier.setThemeMode(s.first),
           ),
         ],
       ),

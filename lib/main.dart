@@ -6,10 +6,12 @@ import 'package:al_daa_wal_dawaa/data/local/database_helper.dart';
 import 'package:al_daa_wal_dawaa/data/remote/update_service.dart';
 import 'package:al_daa_wal_dawaa/data/services/app_audio_handler.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/settings_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 Future<void> main() async {
@@ -25,6 +27,7 @@ Future<void> main() async {
 
   await initDatabaseFactory();
   await DatabaseHelper.instance.database;
+  final prefs = await SharedPreferences.getInstance();
 
   final audioHandler = await AudioService.init<AppAudioHandler>(
     builder: AppAudioHandler.new,
@@ -40,6 +43,7 @@ Future<void> main() async {
     ProviderScope(
       overrides: [
         audioHandlerProvider.overrideWithValue(audioHandler),
+        sharedPrefsProvider.overrideWithValue(prefs),
       ],
       child: const AlDaaWalDawaaApp(),
     ),
@@ -118,7 +122,7 @@ class _AlDaaWalDawaaAppState extends ConsumerState<AlDaaWalDawaaApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ref.watch(appSettingsProvider.select((s) => s.themeMode)),
       routerConfig: AppRouter.router,
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
