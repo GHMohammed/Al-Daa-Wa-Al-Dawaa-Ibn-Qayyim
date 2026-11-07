@@ -40,6 +40,8 @@ class DownloadNotifier extends StateNotifier<Map<int, DownloadStatus>> {
       return;
     }
 
+    // تحميل سابق للدرس نفسه (ثم حذفه) يترك القيمة عند 100%
+    _ref.read(downloadProgressProvider(lesson.id).notifier).state = 0;
     setStatus(lesson.id, DownloadStatus.downloading);
 
     try {

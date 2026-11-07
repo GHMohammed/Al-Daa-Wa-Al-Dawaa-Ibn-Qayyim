@@ -28,16 +28,22 @@ class UpdateService {
       final url = AppConstants.updateCheckUrl;
       if (url.isEmpty || url.contains('YOUR_VERSION')) return null;
 
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 10);
-
-      final request = await client.getUrl(Uri.parse(url));
-      final response = await request.close();
-
-      if (response.statusCode != 200) return null;
-
-      final body = await response.transform(utf8.decoder).join();
-      client.close();
+      final client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 10);
+      final String body;
+      try {
+        // المهلة تشمل الطلب وقراءة الرد، لا الاتصال وحده
+        body = await () async {
+          final request = await client.getUrl(Uri.parse(url));
+          final response = await request.close();
+          if (response.statusCode != 200) return '';
+          return response.transform(utf8.decoder).join();
+        }()
+            .timeout(const Duration(seconds: 20));
+      } finally {
+        client.close(force: true);
+      }
+      if (body.isEmpty) return null;
 
       final map = json.decode(body) as Map<String, dynamic>;
       final remoteVersion = (map['version'] as String?)?.trim() ?? '';
