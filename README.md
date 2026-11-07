@@ -12,7 +12,7 @@
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter"></a>
   <a href="https://www.android.com"><img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android"></a>
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
-  <img src="https://img.shields.io/badge/Release-v1.0.0-blue.svg" alt="Release v1.0.0">
+  <img src="https://img.shields.io/badge/Release-v1.1.0-blue.svg" alt="Release v1.1.0">
 </p>
 
 <p align="center">
