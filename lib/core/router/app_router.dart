@@ -1,4 +1,7 @@
+import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
+import 'package:al_daa_wal_dawaa/ui/screens/book_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/bookmarks_screen.dart';
+import 'package:al_daa_wal_dawaa/ui/screens/reader_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/home_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/player_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/progress_screen.dart';
@@ -19,6 +22,22 @@ class AppRouter {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/book',
+        builder: (context, state) => const BookScreen(),
+      ),
+      GoRoute(
+        path: '/book/read',
+        builder: (context, state) {
+          final q = state.uri.queryParameters;
+          return ReaderScreen(
+            initial: BookPosition(
+              int.tryParse(q['s'] ?? '') ?? 0,
+              int.tryParse(q['p'] ?? '') ?? 0,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/bookmarks',

@@ -7,7 +7,7 @@ class AppBottomNav extends StatelessWidget {
 
   final int currentIndex;
 
-  static const _routes = ['/', '/bookmarks', '/progress', '/settings'];
+  static const _routes = ['/', '/book', '/bookmarks', '/progress', '/settings'];
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +25,11 @@ class AppBottomNav extends StatelessWidget {
             icon: Icon(Icons.headphones_outlined),
             selectedIcon: Icon(Icons.headphones_rounded),
             label: 'الدروس',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book_rounded),
+            label: 'الكتاب',
           ),
           NavigationDestination(
             icon: Icon(Icons.bookmarks_outlined),

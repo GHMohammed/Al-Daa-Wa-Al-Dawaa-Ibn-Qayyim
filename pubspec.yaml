@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.6
   record: ^7.1.2
+  scrollable_positioned_list: ^0.3.8
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/lessons.json
+    - assets/data/book.json
     - assets/data/version.json
     - assets/images/cover.png
     - assets/images/app_icon.png

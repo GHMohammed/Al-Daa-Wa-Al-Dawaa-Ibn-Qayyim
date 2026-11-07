@@ -1,9 +1,12 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
+import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/ui/screens/book_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/voice_recorder_sheet.dart';
@@ -152,6 +155,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                           ),
                         ),
                       _AnnotationsSummary(lessonId: lesson.id),
+                      _ReadInBook(lessonId: lesson.id),
                       const Spacer(),
                       _NextUp(currentId: lesson.id),
                     ],
@@ -501,6 +505,28 @@ class _AnnotationsSummary extends ConsumerWidget {
         icon: const Icon(Icons.bookmarks_outlined, size: 18),
         label: Text('في هذا الدرس: ${parts.join(' و')}'),
       ),
+    );
+  }
+}
+
+/// «اقرأ هذا الموضع في الكتاب» — يظهر للدروس المرتبطة بموضع في النص
+class _ReadInBook extends ConsumerWidget {
+  const _ReadInBook({required this.lessonId});
+
+  final int lessonId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final anchor =
+        ref.watch(bookProvider).valueOrNull?.anchorForLesson(lessonId);
+    if (anchor == null) return const SizedBox.shrink();
+    return TextButton.icon(
+      onPressed: () => openReader(
+        context,
+        BookPosition(anchor.section, anchor.paragraph),
+      ),
+      icon: const Icon(Icons.menu_book_outlined, size: 18),
+      label: const Text('اقرأ هذا الموضع في الكتاب'),
     );
   }
 }
