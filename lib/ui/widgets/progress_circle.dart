@@ -11,12 +11,14 @@ class ProgressCircle extends StatelessWidget {
     this.size = 160,
     this.strokeWidth = 10,
     this.centerText,
+    this.label = 'من الكتاب',
   });
 
   final double progress;
   final double size;
   final double strokeWidth;
   final String? centerText;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class ProgressCircle extends StatelessWidget {
                     ),
               ),
               Text(
-                'من الكتاب',
+                label,
                 style: Theme.of(context)
                     .textTheme
                     .labelMedium

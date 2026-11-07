@@ -2,7 +2,6 @@ import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +54,6 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 4),
       ),
     );
   }

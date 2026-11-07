@@ -26,7 +26,8 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  test('upgrading a v1 database keeps progress and adds v2 tables', () async {
+  test('upgrading a v1 database keeps progress and adds the newer tables',
+      () async {
     final path = p.join(tempDir.path, 'app.db');
 
     // مخطط الإصدار 1.0.0 كما شُحن للمستخدمين
@@ -72,7 +73,7 @@ void main() {
       ),
     );
 
-    expect(await v2.getVersion(), 2);
+    expect(await v2.getVersion(), AppConstants.dbVersion);
     expect(
       await _tables(v2),
       containsAll([
@@ -80,6 +81,7 @@ void main() {
         AppConstants.tableDownloads,
         AppConstants.tableBookmarks,
         AppConstants.tableNotes,
+        AppConstants.tableListeningLog,
       ]),
     );
     final progress = await v2.query('progress');
@@ -113,6 +115,7 @@ void main() {
         AppConstants.tableDownloads,
         AppConstants.tableBookmarks,
         AppConstants.tableNotes,
+        AppConstants.tableListeningLog,
       ]),
     );
     await db.close();

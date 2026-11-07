@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/models/lesson_model.dart';
@@ -65,104 +67,124 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final maxMs = duration.inMilliseconds.toDouble();
     final notifier = ref.read(playerProvider.notifier);
 
+    // الجزء السفلي (العنوان والأدوات والشريط والأزرار) بحجمه الطبيعي قرب الإبهام،
+    // والغلاف يأخذ ما تبقّى من المساحة فوقه
+    final details = <Widget>[
+      const SizedBox(height: AppSpacing.md),
+      Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+        ),
+        child: Text(
+          lesson.title,
+          textAlign: TextAlign.center,
+          style: text.titleLarge,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xxs),
+      Text(
+        'الشيخ ${AppConstants.sheikhName}',
+        style: text.bodySmall?.copyWith(color: colors.textMuted),
+      ),
+      const SizedBox(height: AppSpacing.md),
+      _ToolsRow(
+        lessonId: lesson.id,
+        speed: player.speed,
+        position: player.position,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      _SeekBar(
+        lessonId: lesson.id,
+        positionMs: player.position.inMilliseconds.toDouble().clamp(0.0, maxMs),
+        maxMs: maxMs > 0 ? maxMs : 1,
+        onSeek: (v) => notifier.seek(Duration(milliseconds: v.toInt())),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppConstants.formatDuration(player.position),
+              style: text.labelSmall?.copyWith(color: colors.textMuted),
+            ),
+            Text(
+              AppConstants.formatDuration(duration),
+              style: text.labelSmall?.copyWith(color: colors.textMuted),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      _Controls(
+        playing: player.status == PlayerStatus.playing,
+        loading: player.status == PlayerStatus.loading,
+      ),
+      if (player.status == PlayerStatus.error && player.errorMessage != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl,
+            AppSpacing.md,
+            AppSpacing.xl,
+            0,
+          ),
+          child: Text(
+            player.errorMessage!,
+            textAlign: TextAlign.center,
+            style: text.bodySmall?.copyWith(color: colors.danger),
+          ),
+        ),
+      _LessonLinks(lessonId: lesson.id),
+      _NextUp(currentId: lesson.id),
+    ];
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: SafeArea(
           child: LayoutBuilder(
-            // التمرير متاح دائماً للشاشات الصغيرة، والمحتوى يملأ الطول في الكبيرة
-            builder: (context, constraints) => SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
+            builder: (context, constraints) {
+              // شاشة قصيرة أو خط نظام كبير: تمرير مع غلاف أصغر بدل الضغط
+              if (constraints.maxHeight < 600) {
+                return SingleChildScrollView(
                   child: Column(
                     children: [
                       _TopBar(lessonId: lesson.id),
-                      const SizedBox(height: AppSpacing.md),
-                      _Cover(number: lesson.id),
-                      const SizedBox(height: AppSpacing.lg),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                        ),
-                        child: Text(
-                          lesson.title,
-                          textAlign: TextAlign.center,
-                          style: text.titleLarge,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xxs),
-                      Text(
-                        'الشيخ ${AppConstants.sheikhName}',
-                        style:
-                            text.bodySmall?.copyWith(color: colors.textMuted),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _ToolsRow(
-                        lessonId: lesson.id,
-                        speed: player.speed,
-                        position: player.position,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      _SeekBar(
-                        lessonId: lesson.id,
-                        positionMs: player.position.inMilliseconds
-                            .toDouble()
-                            .clamp(0.0, maxMs),
-                        maxMs: maxMs > 0 ? maxMs : 1,
-                        onSeek: (v) =>
-                            notifier.seek(Duration(milliseconds: v.toInt())),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xl,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              AppConstants.formatDuration(player.position),
-                              style: text.labelSmall
-                                  ?.copyWith(color: colors.textMuted),
-                            ),
-                            Text(
-                              AppConstants.formatDuration(duration),
-                              style: text.labelSmall
-                                  ?.copyWith(color: colors.textMuted),
-                            ),
-                          ],
-                        ),
-                      ),
                       const SizedBox(height: AppSpacing.xs),
-                      _Controls(
-                        playing: player.status == PlayerStatus.playing,
-                        loading: player.status == PlayerStatus.loading,
-                      ),
-                      if (player.status == PlayerStatus.error &&
-                          player.errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.xl,
-                            AppSpacing.md,
-                            AppSpacing.xl,
-                            0,
-                          ),
-                          child: Text(
-                            player.errorMessage!,
-                            textAlign: TextAlign.center,
-                            style:
-                                text.bodySmall?.copyWith(color: colors.danger),
-                          ),
-                        ),
-                      _AnnotationsSummary(lessonId: lesson.id),
-                      _ReadInBook(lessonId: lesson.id),
-                      const Spacer(),
-                      _NextUp(currentId: lesson.id),
+                      _Cover(number: lesson.id, size: 168),
+                      ...details,
                     ],
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+              return Column(
+                children: [
+                  _TopBar(lessonId: lesson.id),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, area) {
+                        final size = math.max(
+                          120.0,
+                          math.min(
+                            340.0,
+                            math.min(
+                              area.maxHeight - AppSpacing.md * 2,
+                              area.maxWidth - AppSpacing.xxxl * 2,
+                            ),
+                          ),
+                        );
+                        return Center(
+                          child: _Cover(number: lesson.id, size: size),
+                        );
+                      },
+                    ),
+                  ),
+                  ...details,
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -212,16 +234,20 @@ class _TopBar extends StatelessWidget {
 
 /// غلاف الدرس: سطح أخضر عميق بزخرفة ذهبية، ورقم الدرس في دائرة بالوسط
 class _Cover extends StatelessWidget {
-  const _Cover({required this.number});
+  const _Cover({required this.number, required this.size});
 
   final int number;
+
+  /// يتغيّر حسب طول الشاشة؛ الدائرة والزخرفة تتناسبان معه
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final ring = size * 0.4;
     return Container(
-      width: 220,
-      height: 220,
+      width: size,
+      height: size,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colors.header,
@@ -233,12 +259,12 @@ class _Cover extends StatelessWidget {
           Positioned.fill(
             child: IslamicPattern(
               color: colors.gold.withValues(alpha: 0.24),
-              cellSize: 55,
+              cellSize: size / 4,
             ),
           ),
           Container(
-            width: 88,
-            height: 88,
+            width: ring,
+            height: ring,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: colors.header,
@@ -249,7 +275,7 @@ class _Cover extends StatelessWidget {
               '$number',
               style: TextStyle(
                 color: colors.gold,
-                fontSize: number > 9 ? 30 : 34,
+                fontSize: ring * (number > 9 ? 0.34 : 0.38),
                 fontWeight: AppTypography.medium,
               ),
             ),
@@ -282,7 +308,7 @@ class _ToolsRow extends ConsumerWidget {
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: AppSpacing.xs,
-      runSpacing: AppSpacing.xs,
+      runSpacing: 0,
       children: [
         PopupMenuButton<double>(
           initialValue: speed,
@@ -345,8 +371,9 @@ class _ToolChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    // الشكل الظاهر 40، ومساحة اللمس 48 (إرشادات إمكانية الوصول)
     final chip = Container(
-      constraints: const BoxConstraints(minHeight: 36),
+      height: 40,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm + 2),
       decoration: BoxDecoration(
         color: colors.accentContainer,
@@ -355,7 +382,7 @@ class _ToolChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 17, color: colors.onAccentContainer),
+          Icon(icon, size: 18, color: colors.onAccentContainer),
           const SizedBox(width: AppSpacing.xxs + 2),
           Text(
             label,
@@ -367,13 +394,17 @@ class _ToolChip extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) return chip;
+    final target = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: AppSizes.minTapTarget),
+      child: Center(widthFactor: 1, child: chip),
+    );
+    if (onTap == null) return target;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.pill),
+        customBorder: const StadiumBorder(),
         onTap: onTap,
-        child: chip,
+        child: target,
       ),
     );
   }
@@ -468,17 +499,51 @@ class _TicksPainter extends CustomPainter {
       !listEquals(old.colors, colors);
 }
 
-/// سطر يلخّص علامات وملاحظات الدرس ويفتح قائمتها
-class _AnnotationsSummary extends ConsumerWidget {
-  const _AnnotationsSummary({required this.lessonId});
+/// سطر واحد تحت الأزرار: علامات وملاحظات الدرس، والموضع في الكتاب
+class _LessonLinks extends ConsumerWidget {
+  const _LessonLinks({required this.lessonId});
 
   final int lessonId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(lessonAnnotationsProvider(lessonId));
-    if (items.isEmpty) return const SizedBox.shrink();
+    final anchor =
+        ref.watch(bookProvider).valueOrNull?.anchorForLesson(lessonId);
+    if (items.isEmpty && anchor == null) {
+      return const SizedBox(height: AppSpacing.sm);
+    }
 
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xxs,
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: AppSpacing.xs,
+        children: [
+          if (items.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _showLessonAnnotations(context, lessonId),
+              icon: const Icon(Icons.bookmarks_outlined, size: 18),
+              label: Text(_summary(items)),
+            ),
+          if (anchor != null)
+            TextButton.icon(
+              onPressed: () => openReader(
+                context,
+                BookPosition(anchor.section, anchor.paragraph),
+              ),
+              icon: const Icon(Icons.menu_book_outlined, size: 18),
+              label: const Text('اقرأ في الكتاب'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static String _summary(List<AnnotationItem> items) {
     final notes = items.where((i) => i.isNote).length;
     final marks = items.length - notes;
     // العدد في العربية: مفرد، مثنى، جمع (3–10)، ثم مفرد منصوب (11+)
@@ -495,36 +560,7 @@ class _AnnotationsSummary extends ConsumerWidget {
         count(notes, 'ملاحظة واحدة', 'ملاحظتان', 'ملاحظات', 'ملاحظة'),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
-      child: TextButton.icon(
-        onPressed: () => _showLessonAnnotations(context, lessonId),
-        icon: const Icon(Icons.bookmarks_outlined, size: 18),
-        label: Text('في هذا الدرس: ${parts.join(' و')}'),
-      ),
-    );
-  }
-}
-
-/// «اقرأ هذا الموضع في الكتاب» — يظهر للدروس المرتبطة بموضع في النص
-class _ReadInBook extends ConsumerWidget {
-  const _ReadInBook({required this.lessonId});
-
-  final int lessonId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final anchor =
-        ref.watch(bookProvider).valueOrNull?.anchorForLesson(lessonId);
-    if (anchor == null) return const SizedBox.shrink();
-    return TextButton.icon(
-      onPressed: () => openReader(
-        context,
-        BookPosition(anchor.section, anchor.paragraph),
-      ),
-      icon: const Icon(Icons.menu_book_outlined, size: 18),
-      label: const Text('اقرأ هذا الموضع في الكتاب'),
-    );
+    return parts.join(' و');
   }
 }
 
@@ -657,9 +693,9 @@ class _NextUp extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
+        AppSpacing.xxs,
         AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.xs,
+        AppSpacing.xxs,
       ),
       child: Column(
         children: [
@@ -667,10 +703,11 @@ class _NextUp extends ConsumerWidget {
           InkWell(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             onTap: ref.read(playerProvider.notifier).playNext,
-            child: Padding(
+            child: Container(
+              constraints:
+                  const BoxConstraints(minHeight: AppSizes.minTapTarget),
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.xxs,
-                vertical: AppSpacing.sm,
               ),
               child: Row(
                 children: [
