@@ -17,6 +17,8 @@ abstract final class AppPalette {
   // الذهبي — للتمييز (التقدم الجزئي، زر التشغيل في البطاقة، الزخرفة)
   static const Color gold500 = Color(0xFFC6A253);
   static const Color gold400 = Color(0xFFD5B366);
+  // ذهبي داكن للنص على الخلفيات الفاتحة (تباين 5:1 مع paper)
+  static const Color gold700Ink = Color(0xFF85652A);
   static const Color sand = Color(0xFFB9A57A);
   static const Color sandDark = Color(0xFF5E7A6C);
 
@@ -27,7 +29,7 @@ abstract final class AppPalette {
   static const Color ring = Color(0xFFCDD5D0);
   static const Color ink = Color(0xFF13241C);
   static const Color inkSoft = Color(0xFF41524A);
-  static const Color inkMute = Color(0xFF6B7A72);
+  static const Color inkMute = Color(0xFF5E6D65);
 
   static const Color night = Color(0xFF0D1310);
   static const Color nightCard = Color(0xFF141C19);
@@ -56,6 +58,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.accent,
     required this.gold,
     required this.onGold,
+    required this.goldInk,
     required this.accentContainer,
     required this.onAccentContainer,
     required this.header,
@@ -83,6 +86,10 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   /// الذهبي: التقدم الجزئي في الدرس، زر بطاقة «أكمل الاستماع»، الزخرفة على الأخضر
   final Color gold;
   final Color onGold;
+
+  /// الذهبي للنص والأيقونات الصغيرة على سطح الصفحة (لا على الأخضر العميق)؛
+  /// [gold] أفتح من أن يُقرأ نصاً على الخلفية الفاتحة
+  final Color goldInk;
 
   /// خلفية هادئة بلون الهوية (الشارات، أدوات المشغّل، عنصر التنقل النشط)
   final Color accentContainer;
@@ -118,6 +125,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     accent: AppPalette.green700,
     gold: AppPalette.gold500,
     onGold: AppPalette.green950,
+    goldInk: AppPalette.gold700Ink,
     accentContainer: AppPalette.green100,
     onAccentContainer: AppPalette.green800Ink,
     header: AppPalette.green950,
@@ -141,6 +149,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     accent: AppPalette.green400,
     gold: AppPalette.gold400,
     onGold: AppPalette.green900,
+    goldInk: AppPalette.gold400,
     accentContainer: AppPalette.greenDarkSurface,
     onAccentContainer: AppPalette.greenMintInk,
     header: AppPalette.green900,
@@ -165,6 +174,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? accent,
     Color? gold,
     Color? onGold,
+    Color? goldInk,
     Color? accentContainer,
     Color? onAccentContainer,
     Color? header,
@@ -187,6 +197,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       accent: accent ?? this.accent,
       gold: gold ?? this.gold,
       onGold: onGold ?? this.onGold,
+      goldInk: goldInk ?? this.goldInk,
       accentContainer: accentContainer ?? this.accentContainer,
       onAccentContainer: onAccentContainer ?? this.onAccentContainer,
       header: header ?? this.header,
@@ -215,6 +226,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       accent: l(accent, other.accent),
       gold: l(gold, other.gold),
       onGold: l(onGold, other.onGold),
+      goldInk: l(goldInk, other.goldInk),
       accentContainer: l(accentContainer, other.accentContainer),
       onAccentContainer: l(onAccentContainer, other.onAccentContainer),
       header: l(header, other.header),

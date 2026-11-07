@@ -104,7 +104,7 @@ class _Summary extends ConsumerWidget {
                         const TextSpan(text: 'بقي نحو '),
                         TextSpan(
                           text: '$remainingHours ساعة',
-                          style: TextStyle(color: colors.gold),
+                          style: TextStyle(color: colors.goldInk),
                         ),
                         const TextSpan(text: ' لإتمام الشرح'),
                       ],
@@ -128,11 +128,26 @@ class _Summary extends ConsumerWidget {
   /// المدة المتوقعة إن استمر المستمع على معدّل آخر 7 أيام
   static String _paceLabel(int remaining, int weekSeconds) {
     final days = (remaining / (weekSeconds / 7)).ceil();
-    if (days <= 1) return 'يوم واحد';
-    if (days < 14) return '$days أيام';
+    if (days < 14) return _count(days, 'يوم واحد', 'يومان', 'أيام', 'يوماً');
     final weeks = (days / 7).round();
-    if (weeks < 9) return '$weeks أسابيع';
-    return '${(days / 30).round()} أشهر';
+    if (weeks < 9) return _count(weeks, '', 'أسبوعان', 'أسابيع', '');
+    final months = (days / 30).round();
+    if (months < 24) return _count(months, '', 'شهران', 'أشهر', 'شهراً');
+    return _count((days / 365).round(), '', 'سنتان', 'سنوات', 'سنة');
+  }
+
+  /// تمييز العدد بالعربية: 1 مفرد، 2 مثنى، 3–10 جمع، 11 فما فوق مفرد منصوب
+  static String _count(
+    int n,
+    String one,
+    String two,
+    String few,
+    String many,
+  ) {
+    if (n <= 1) return one;
+    if (n == 2) return two;
+    if (n <= 10) return '$n $few';
+    return '$n $many';
   }
 }
 

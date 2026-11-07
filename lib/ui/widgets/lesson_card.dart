@@ -85,7 +85,7 @@ class LessonCard extends ConsumerWidget {
                         TextSpan(
                           text: status,
                           style: state == LessonState.inProgress
-                              ? TextStyle(color: colors.gold)
+                              ? TextStyle(color: colors.goldInk)
                               : null,
                         ),
                       ],
