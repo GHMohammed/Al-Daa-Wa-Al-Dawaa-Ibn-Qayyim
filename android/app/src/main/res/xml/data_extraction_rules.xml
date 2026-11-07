@@ -11,6 +11,11 @@
     -->
     <cloud-backup>
         <exclude domain="root" path="app_flutter/lessons/" />
+        <!--
+          نسخة التطوير تنسخ ملفات التطبيق هنا (~90 ميغا) فتتجاوز الحد؛
+          نسخة النشر لا تنشئه، والاستثناء يحمي إن ظهر لأي سبب
+        -->
+        <exclude domain="root" path="app_flutter/flutter_assets/" />
     </cloud-backup>
     <!--
       النقل المباشر من هاتف قديم إلى جديد بلا حد للحجم، فتنتقل الدروس
