@@ -646,7 +646,7 @@ class _AboutCard extends StatelessWidget {
                 child: Text('الإصدار', style: TextStyle(fontSize: 14)),
               ),
               Text(
-                '1.0.0',
+                AppConstants.appVersion,
                 style: TextStyle(
                   fontSize: 13,
                   color: mutedColor,

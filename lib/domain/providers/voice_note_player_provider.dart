@@ -70,7 +70,14 @@ class VoiceNotePlayer extends StateNotifier<VoicePlayback> {
       return;
     }
     await _pauseLesson();
-    final duration = await _player.setFilePath(path);
+    final Duration? duration;
+    try {
+      duration = await _player.setFilePath(path);
+    } catch (_) {
+      // الملف مفقود أو تالف: لا نترك استثناءً بلا معالجة
+      state = const VoicePlayback();
+      return;
+    }
     state = VoicePlayback(
       path: path,
       playing: true,
