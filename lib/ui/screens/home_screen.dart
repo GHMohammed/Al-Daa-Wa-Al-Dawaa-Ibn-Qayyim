@@ -3,10 +3,8 @@ import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/home_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/lesson_card.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/mini_player.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
@@ -69,11 +67,9 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const MiniPlayer(),
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 0),
       ),
     );
   }

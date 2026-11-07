@@ -3,7 +3,6 @@ import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/lesson_card.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
@@ -148,7 +147,6 @@ class ProgressScreen extends ConsumerWidget {
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 3),
       ),
     );
   }

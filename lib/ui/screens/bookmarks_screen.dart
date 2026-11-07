@@ -3,8 +3,6 @@ import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/mini_player.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
@@ -196,11 +194,9 @@ class BookmarksScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const MiniPlayer(),
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       ),
     );
   }

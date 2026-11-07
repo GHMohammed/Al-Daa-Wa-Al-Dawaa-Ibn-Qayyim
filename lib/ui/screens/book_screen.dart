@@ -1,9 +1,7 @@
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
 import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
-import 'package:al_daa_wal_dawaa/ui/widgets/mini_player.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/page_header.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/status_bar_scrim.dart';
 import 'package:flutter/material.dart';
@@ -38,11 +36,9 @@ class BookScreen extends ConsumerWidget {
                   data: (index) => _Contents(index: index),
                 ),
               ),
-              const MiniPlayer(),
             ],
           ),
         ),
-        bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       ),
     );
   }

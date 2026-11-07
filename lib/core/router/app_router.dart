@@ -1,11 +1,7 @@
 import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
-import 'package:al_daa_wal_dawaa/ui/screens/book_screen.dart';
-import 'package:al_daa_wal_dawaa/ui/screens/bookmarks_screen.dart';
+import 'package:al_daa_wal_dawaa/ui/screens/main_shell.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/reader_screen.dart';
-import 'package:al_daa_wal_dawaa/ui/screens/home_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/player_screen.dart';
-import 'package:al_daa_wal_dawaa/ui/screens/progress_screen.dart';
-import 'package:al_daa_wal_dawaa/ui/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,14 +15,14 @@ class AppRouter {
     navigatorKey: navigatorKey,
     initialLocation: '/',
     routes: [
+      // الأقسام الخمسة في إطار واحد قابل للسحب؛ ‎/?tab=N يفتح قسماً بعينه
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => MainShell(
+          initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
+        ),
       ),
-      GoRoute(
-        path: '/book',
-        builder: (context, state) => const BookScreen(),
-      ),
+      GoRoute(path: '/book', redirect: (_, __) => '/?tab=1'),
       GoRoute(
         path: '/book/read',
         builder: (context, state) {
@@ -39,18 +35,9 @@ class AppRouter {
           );
         },
       ),
-      GoRoute(
-        path: '/bookmarks',
-        builder: (context, state) => const BookmarksScreen(),
-      ),
-      GoRoute(
-        path: '/progress',
-        builder: (context, state) => const ProgressScreen(),
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
+      GoRoute(path: '/bookmarks', redirect: (_, __) => '/?tab=2'),
+      GoRoute(path: '/progress', redirect: (_, __) => '/?tab=3'),
+      GoRoute(path: '/settings', redirect: (_, __) => '/?tab=4'),
       GoRoute(
         path: '/player/:lessonId',
         builder: (context, state) {

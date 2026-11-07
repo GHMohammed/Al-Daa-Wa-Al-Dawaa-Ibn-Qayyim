@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-/// شريط التنقل السفلي المشترك
+/// شريط التنقل السفلي — يتحكم به MainShell
 class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({super.key, required this.currentIndex});
+  const AppBottomNav({
+    super.key,
+    required this.currentIndex,
+    required this.onSelected,
+  });
 
   final int currentIndex;
-
-  static const _routes = ['/', '/book', '/bookmarks', '/progress', '/settings'];
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -17,9 +19,7 @@ class AppBottomNav extends StatelessWidget {
       ),
       child: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          if (index != currentIndex) context.go(_routes[index]);
-        },
+        onDestinationSelected: onSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.headphones_outlined),
