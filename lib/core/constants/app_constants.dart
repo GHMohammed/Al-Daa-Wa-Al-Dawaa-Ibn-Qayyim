@@ -3,7 +3,6 @@ class AppConstants {
   AppConstants._();
 
   static const String lessonsAssetPath = 'assets/data/lessons.json';
-  static const String coverImagePath = 'assets/images/cover.png';
 
   static const String appTitle = 'شرح كتاب الداء والدواء';
   static const String sheikhName = 'عبد الرزاق بن عبد المحسن البدر';

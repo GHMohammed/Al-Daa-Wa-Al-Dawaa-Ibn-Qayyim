@@ -48,6 +48,21 @@ class IslamicPattern extends StatelessWidget {
 
   /// عرض الخلية المتكررة بوحدات cellSize (فيها وريدتان)
   static const double _tilesPerCell = 1.45;
+
+  /// يرسم الزخرفة على Canvas مباشرة — لصور تُولَّد خارج الواجهة
+  /// (مثل غلاف الدرس في شاشة القفل)
+  static void paintOn(
+    Canvas canvas,
+    Size size, {
+    required Color color,
+    double cellSize = 52,
+    double strokeWidth = 0.8,
+  }) =>
+      _RosettePainter(
+        color: color,
+        tileWidth: cellSize * _tilesPerCell,
+        strokeWidth: strokeWidth,
+      ).paint(canvas, size);
 }
 
 class _RosettePainter extends CustomPainter {

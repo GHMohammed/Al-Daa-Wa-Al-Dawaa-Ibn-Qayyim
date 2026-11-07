@@ -62,7 +62,6 @@ flutter:
     - assets/data/lessons.json
     - assets/data/book.json
     - assets/data/version.json
-    - assets/images/cover.png
     - assets/images/app_icon.png
     - assets/images/app_icon_padded.png
 
