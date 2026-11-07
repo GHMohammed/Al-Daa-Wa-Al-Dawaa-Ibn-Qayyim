@@ -7,7 +7,3 @@ String normalizeArabic(String text) {
       .replaceAll('ة', 'ه')
       .replaceAll(RegExp(r'\s+'), ' ');
 }
-
-/// أرقام عربية مشرقية (للعرض في سياق الكتاب)
-String arabicDigits(int n) =>
-    n.toString().split('').map((d) => '٠١٢٣٤٥٦٧٨٩'[int.parse(d)]).join();

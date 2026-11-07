@@ -1,5 +1,4 @@
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
-import 'package:al_daa_wal_dawaa/core/utils/arabic_text.dart';
 import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/app_bottom_nav.dart';
@@ -150,7 +149,7 @@ class _Contents extends ConsumerWidget {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
-                        arabicDigits(section.page),
+                        '${section.page}',
                         style:
                             text.labelMedium?.copyWith(color: colors.textMuted),
                       ),
@@ -224,7 +223,7 @@ class _ContinueReadingCard extends StatelessWidget {
                     Text(
                       fresh
                           ? 'ابدأ القراءة'
-                          : 'أكمل القراءة، ص ${arabicDigits(section.page)}',
+                          : 'أكمل القراءة، ص ${section.page}',
                       style: text.labelMedium
                           ?.copyWith(color: colors.onHeaderMuted),
                     ),
@@ -267,7 +266,7 @@ class _ContinueReadingCard extends StatelessWidget {
                               ),
                               const SizedBox(height: AppSpacing.xs - 2),
                               Text(
-                                'قرأت ${(progress * 100).round()}٪ من الكتاب',
+                                'قرأت ${(progress * 100).round()}% من الكتاب',
                                 style: text.labelSmall
                                     ?.copyWith(color: colors.onHeaderMuted),
                               ),
@@ -367,7 +366,7 @@ class BookSearchDelegate extends SearchDelegate<void> {
               AppSpacing.xs,
             ),
             child: Text(
-              hits.length >= 100 ? 'أول ١٠٠ نتيجة' : '${hits.length} نتيجة',
+              hits.length >= 100 ? 'أول 100 نتيجة' : '${hits.length} نتيجة',
               style: text.labelMedium?.copyWith(color: colors.textMuted),
             ),
           );
@@ -382,7 +381,7 @@ class BookSearchDelegate extends SearchDelegate<void> {
             style: text.bodyMedium,
           ),
           subtitle: Text(
-            '${section.title}، ص ${arabicDigits(section.page)}',
+            '${section.title}، ص ${section.page}',
             style: text.labelSmall?.copyWith(color: colors.textMuted),
           ),
           onTap: () {

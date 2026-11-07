@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:al_daa_wal_dawaa/core/theme/app_theme.dart';
-import 'package:al_daa_wal_dawaa/core/utils/arabic_text.dart';
 import 'package:al_daa_wal_dawaa/data/models/book_model.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
@@ -239,7 +238,7 @@ class _ReaderState extends ConsumerState<_Reader> {
               selectedColor: ctx.colors.onAccentContainer,
               title: Text(s.title, style: const TextStyle(fontSize: 14)),
               trailing: Text(
-                arabicDigits(s.page),
+                '${s.page}',
                 style: TextStyle(color: ctx.colors.textMuted, fontSize: 12),
               ),
               onTap: () {
@@ -348,7 +347,7 @@ class _BottomBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text('ص ${arabicDigits(page)}', style: style),
+              Text('ص $page', style: style),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: ClipRRect(
@@ -362,7 +361,7 @@ class _BottomBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              Text('${arabicDigits((progress * 100).round())}٪', style: style),
+              Text('${(progress * 100).round()}%', style: style),
             ],
           ),
         );
@@ -439,7 +438,7 @@ class _ItemView extends StatelessWidget {
                     const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: Text(
-                        'استمع لشرح هذا الموضع — الدرس ${arabicDigits(item.lesson!)}',
+                        'استمع لشرح هذا الموضع — الدرس ${item.lesson}',
                         style: TextStyle(color: pal.onChip, fontSize: 13),
                       ),
                     ),
