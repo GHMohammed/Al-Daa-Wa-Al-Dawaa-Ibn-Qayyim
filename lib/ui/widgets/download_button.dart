@@ -89,6 +89,7 @@ class DownloadButton extends ConsumerWidget {
                 : 'فشل التحميل: $e',
           ),
           duration: const Duration(seconds: 6),
+          persist: false,
           action: isDrive
               ? SnackBarAction(
                   label: 'المتصفح',
