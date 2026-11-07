@@ -8,10 +8,12 @@ import 'package:al_daa_wal_dawaa/domain/providers/annotations_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/book_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/lessons_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/player_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/sleep_timer_provider.dart';
 import 'package:al_daa_wal_dawaa/ui/screens/book_screen.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/annotation_widgets.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/islamic_pattern.dart';
+import 'package:al_daa_wal_dawaa/ui/widgets/lesson_card.dart';
 import 'package:al_daa_wal_dawaa/ui/widgets/voice_recorder_sheet.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -226,7 +228,12 @@ class _TopBar extends StatelessWidget {
             icon: const Icon(Icons.format_list_bulleted_rounded),
             color: colors.textMuted,
             tooltip: 'قائمة الدروس',
-            onPressed: () => context.go('/'),
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => _LessonsSheet(currentId: lessonId),
+            ),
           ),
         ],
       ),
@@ -321,6 +328,155 @@ void _showSleepTimerSheet(BuildContext context, WidgetRef ref) {
       );
     },
   );
+}
+
+/// قائمة الدروس داخل المشغّل: الدرس الحالي مميّز والقائمة تفتح عنده،
+/// واختيار درس آخر يشغّله مباشرة دون الخروج من المشغّل
+class _LessonsSheet extends ConsumerStatefulWidget {
+  const _LessonsSheet({required this.currentId});
+
+  final int currentId;
+
+  @override
+  ConsumerState<_LessonsSheet> createState() => _LessonsSheetState();
+}
+
+class _LessonsSheetState extends ConsumerState<_LessonsSheet> {
+  static const _rowHeight = 68.0;
+  late final ScrollController _scroll;
+
+  @override
+  void initState() {
+    super.initState();
+    final lessons = ref.read(lessonsProvider).valueOrNull ?? const [];
+    final index = lessons.indexWhere((l) => l.lesson.id == widget.currentId);
+    // الدرس الحالي ثالثاً من الأعلى، ليظهر ما قبله قليلاً
+    _scroll = ScrollController(
+      initialScrollOffset: math.max(0, index - 2) * _rowHeight,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lessons = ref.watch(lessonsProvider).valueOrNull ?? const [];
+    final progress = ref.watch(progressMapProvider);
+    final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.72,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Text('قائمة الدروس', style: text.titleMedium),
+          ),
+          Expanded(
+            child: ListView.builder(
+              controller: _scroll,
+              itemExtent: _rowHeight,
+              itemCount: lessons.length,
+              itemBuilder: (context, i) {
+                final lesson = lessons[i].lesson;
+                final p = progress[lesson.id];
+                final isCurrent = lesson.id == widget.currentId;
+                final completed = p != null && isProgressCompleted(p);
+                final started = (p?.position ?? 0) > 0;
+                final percent = ((p?.percentage ?? 0) * 100).round();
+                final status = isCurrent
+                    ? 'يُستمع إليه الآن'
+                    : completed
+                        ? 'مكتمل'
+                        : !started
+                            ? '${(lesson.duration / 60).round()} دقيقة'
+                            // ثوانٍ قليلة تُقرَّب إلى 0%، وهذا يبدو كأنه لم يبدأ
+                            : percent == 0
+                                ? 'بدأت الاستماع'
+                                : 'استمعت $percent%';
+
+                return Material(
+                  color:
+                      isCurrent ? colors.accentContainer : Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      if (!isCurrent) {
+                        ref.read(playerProvider.notifier).play(lesson);
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: Row(
+                        children: [
+                          LessonNumberRing(
+                            number: lesson.id,
+                            state: completed
+                                ? LessonState.completed
+                                : started
+                                    ? LessonState.inProgress
+                                    : LessonState.notStarted,
+                            progress: p?.percentage ?? 0,
+                            size: 38,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  lesson.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: text.bodyMedium?.copyWith(
+                                    color: isCurrent
+                                        ? colors.onAccentContainer
+                                        : null,
+                                  ),
+                                ),
+                                Text(
+                                  status,
+                                  style: text.labelSmall?.copyWith(
+                                    color: isCurrent
+                                        ? colors.brand
+                                        : colors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (isCurrent)
+                            Icon(
+                              Icons.graphic_eq_rounded,
+                              color: colors.brand,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// غلاف الدرس: سطح أخضر عميق بزخرفة ذهبية، ورقم الدرس في دائرة بالوسط
