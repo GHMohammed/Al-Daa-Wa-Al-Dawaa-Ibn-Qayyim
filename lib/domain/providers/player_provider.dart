@@ -15,7 +15,8 @@ import 'package:al_daa_wal_dawaa/domain/providers/settings_provider.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/sleep_timer_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:just_audio/just_audio.dart' show ProcessingState;
+import 'package:just_audio/just_audio.dart'
+    show PlayerException, ProcessingState;
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum PlayerStatus { idle, loading, playing, paused, error }
@@ -97,6 +98,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlaybackState>? _playbackSub;
   StreamSubscription<ProcessingState>? _completionSub;
+  StreamSubscription<PlayerException>? _errorSub;
 
   /// ثوانٍ استُمع إليها فعلاً (وقت حقيقي) ولم تُحفظ في السجل اليومي بعد
   Timer? _listenTicker;
@@ -127,9 +129,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       state = state.copyWith(
         position: position,
         duration: duration,
-        status: _handler.player.playing
-            ? PlayerStatus.playing
-            : PlayerStatus.paused,
+        status: _liveStatus(_handler.player.playing),
+        errorMessage: _stickyError(_handler.player.playing),
       );
       _maybeSaveProgress();
     });
@@ -138,15 +139,40 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       if (state.currentLesson == null) return;
       final playing = playbackState.playing;
       state = state.copyWith(
-        status: playing ? PlayerStatus.playing : PlayerStatus.paused,
+        status: _liveStatus(playing),
         position: playbackState.updatePosition,
+        errorMessage: _stickyError(playing),
       );
     });
 
     _completionSub = _handler.player.processingStateStream
         .where((s) => s == ProcessingState.completed)
         .listen((_) => _onLessonCompleted());
+
+    // أخطاء أثناء التشغيل (انقطاع الشبكة مثلاً) — منذ just_audio 0.10 تأتي
+    // من هنا لا من playbackEventStream، وبدونه يبقى المشغّل عالقاً بلا رسالة
+    _errorSub = _handler.player.errorStream.listen((e) {
+      if (state.currentLesson == null) return;
+      _flushListening();
+      _saveCurrentProgress();
+      state = state.copyWith(
+        status: PlayerStatus.error,
+        errorMessage: 'توقف التشغيل، تحقق من الاتصال بالإنترنت ثم أعد المحاولة',
+      );
+    });
   }
+
+  /// الخطأ يبقى ظاهراً حتى يعود التشغيل فعلاً، فلا يمحوه تحديث موضع عابر
+  PlayerStatus _liveStatus(bool playing) => playing
+      ? PlayerStatus.playing
+      : state.status == PlayerStatus.error
+          ? PlayerStatus.error
+          : PlayerStatus.paused;
+
+  String? _stickyError(bool playing) =>
+      !playing && state.status == PlayerStatus.error
+          ? state.errorMessage
+          : null;
 
   /// انتهى الملف: نحفظه مكتملاً، ثم نشغّل التالي ما لم يمنع ذلك
   /// مؤقتُ «نهاية الدرس» أو إعدادُ التشغيل التلقائي
@@ -317,6 +343,10 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       await pause();
     } else if (state.status == PlayerStatus.paused) {
       await resume();
+    } else if (state.status == PlayerStatus.error) {
+      // إعادة المحاولة من آخر موضع محفوظ
+      final lesson = state.currentLesson;
+      if (lesson != null) await play(lesson, startPosition: state.position);
     }
   }
 
@@ -328,6 +358,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
     _positionSub?.cancel();
     _playbackSub?.cancel();
     _completionSub?.cancel();
+    _errorSub?.cancel();
     _listenTicker?.cancel();
     _flushListening();
     _saveCurrentProgress();
