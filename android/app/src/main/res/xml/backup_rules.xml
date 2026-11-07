@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  النسخ الاحتياطي لأندرويد 11 فما دون (docs/auto-backup-plan.md).
+  الدروس المحمّلة تُستثنى حتى لا يتجاوز التطبيق حد 25 ميغا فيتوقف النسخ كله.
+-->
+<full-backup-content>
+    <exclude domain="root" path="app_flutter/lessons/" />
+</full-backup-content>

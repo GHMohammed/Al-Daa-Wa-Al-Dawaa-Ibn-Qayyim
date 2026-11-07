@@ -1,4 +1,5 @@
 import 'package:al_daa_wal_dawaa/core/constants/app_constants.dart';
+import 'package:al_daa_wal_dawaa/data/backup/backup_format.dart';
 import 'package:al_daa_wal_dawaa/data/models/annotation_model.dart';
 import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
@@ -279,5 +280,106 @@ class DatabaseHelper {
     final db = await database;
     final rows = await db.query(AppConstants.tableListeningLog);
     return {for (final r in rows) r['day'] as String: r['seconds'] as int};
+  }
+
+  // ── استعادة نسخة احتياطية ────────────────────────────────────────
+
+  Future<BackupMergeResult> mergeBackup(
+    BackupData data, {
+    required String Function(String fileName) voicePath,
+  }) async =>
+      mergeBackupInto(await database, data, voicePath: voicePath);
+
+  /// يدمج النسخة في عملية واحدة: إن فشل أي جزء لا يتغير شيء.
+  /// قواعد الدمج في backup_format.dart. [voicePath] يحوّل اسم ملف
+  /// الملاحظة الصوتية في النسخة إلى مساره على هذا الجهاز.
+  @visibleForTesting
+  static Future<BackupMergeResult> mergeBackupInto(
+    Database db,
+    BackupData data, {
+    required String Function(String fileName) voicePath,
+  }) {
+    return db.transaction((txn) async {
+      var progressUpdated = 0;
+      final localProgress = {
+        for (final row in await txn.query(AppConstants.tableProgress))
+          row['lesson_id'] as int: ProgressModel.fromJson(row),
+      };
+      for (final incoming in data.progress) {
+        final local = localProgress[incoming.lessonId];
+        final merged = mergeProgress(local, incoming);
+        if (local != null && sameProgress(local, merged)) continue;
+        await txn.insert(
+          AppConstants.tableProgress,
+          merged.toJson(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        progressUpdated++;
+      }
+
+      var daysUpdated = 0;
+      final localLog = {
+        for (final row in await txn.query(AppConstants.tableListeningLog))
+          row['day'] as String: row['seconds'] as int,
+      };
+      for (final entry in data.listeningLog.entries) {
+        final local = localLog[entry.key];
+        final merged = mergeListeningDay(local, entry.value);
+        if (merged == local) continue;
+        await txn.insert(
+          AppConstants.tableListeningLog,
+          {'day': entry.key, 'seconds': merged},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        daysUpdated++;
+      }
+
+      var bookmarksAdded = 0;
+      final bookmarkKeys = {
+        for (final row in await txn.query(AppConstants.tableBookmarks))
+          annotationKey(
+            row['lesson_id'] as int,
+            row['position'] as int,
+            DateTime.parse(row['created_at'] as String),
+          ),
+      };
+      for (final b in data.bookmarks) {
+        if (!bookmarkKeys
+            .add(annotationKey(b.lessonId, b.position, b.createdAt))) {
+          continue;
+        }
+        await txn.insert(
+          AppConstants.tableBookmarks,
+          b.toJson()..remove('id'),
+        );
+        bookmarksAdded++;
+      }
+
+      var notesAdded = 0;
+      final noteKeys = {
+        for (final row in await txn.query(AppConstants.tableNotes))
+          annotationKey(
+            row['lesson_id'] as int,
+            row['position'] as int,
+            DateTime.parse(row['created_at'] as String),
+          ),
+      };
+      for (final n in data.notes) {
+        if (!noteKeys.add(annotationKey(n.lessonId, n.position, n.createdAt))) {
+          continue;
+        }
+        final row = n.toJson()..remove('id');
+        if (n.audioPath != null) row['audio_path'] = voicePath(n.audioPath!);
+        await txn.insert(AppConstants.tableNotes, row);
+        notesAdded++;
+      }
+
+      return BackupMergeResult(
+        progressUpdated: progressUpdated,
+        daysUpdated: daysUpdated,
+        bookmarksAdded: bookmarksAdded,
+        notesAdded: notesAdded,
+      );
+    });
   }
 }

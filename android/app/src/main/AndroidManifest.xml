@@ -12,7 +12,10 @@
     <application
         android:label="الداء والدواء"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <!-- نشاط Flutter مع دعم audio_service -->
         <activity
             android:name="com.ryanheise.audioservice.AudioServiceActivity"

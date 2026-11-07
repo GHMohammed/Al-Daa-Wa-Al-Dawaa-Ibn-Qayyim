@@ -25,6 +25,8 @@ Future<void> addBookmarkWithFeedback(
     ..showSnackBar(
       SnackBar(
         content: Text('أُضيفت علامة عند ${_at(saved.position)}'),
+        // منذ Flutter 3.29 تبقى الرسالة ذات الزر حتى تُغلق؛ هنا تختفي وحدها
+        persist: false,
         action: SnackBarAction(
           label: 'تسمية',
           onPressed: () {
@@ -156,6 +158,8 @@ Future<void> deleteAnnotationWithUndo(
       .showSnackBar(
         SnackBar(
           content: Text(item.isNote ? 'حُذفت الملاحظة' : 'حُذفت العلامة'),
+          // تختفي وحدها، وإلا بقيت ولم يُحذف ملف الملاحظة الصوتية أبداً
+          persist: false,
           action: SnackBarAction(
             label: 'تراجع',
             onPressed: () => notifier.restore(removed),

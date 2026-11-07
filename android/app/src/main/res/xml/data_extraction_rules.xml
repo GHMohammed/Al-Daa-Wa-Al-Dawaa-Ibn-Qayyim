@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  النسخ الاحتياطي لأندرويد 12 فما فوق (docs/auto-backup-plan.md).
+  app_flutter = مجلد getApplicationDocumentsDirectory في Flutter.
+-->
+<data-extraction-rules>
+    <!--
+      النسخ إلى Google Drive حدّه 25 ميغا، وإن تجاوزه التطبيق لا يُنسخ شيء.
+      الدروس المحمّلة (~30 ميغا للدرس) تُستثنى لأنها تُحمَّل من جديد؛
+      ويبقى التقدم والعلامات والملاحظات والإعدادات.
+    -->
+    <cloud-backup>
+        <exclude domain="root" path="app_flutter/lessons/" />
+    </cloud-backup>
+    <!--
+      النقل المباشر من هاتف قديم إلى جديد بلا حد للحجم، فتنتقل الدروس
+      المحمّلة أيضاً.
+    -->
+    <device-transfer />
+</data-extraction-rules>

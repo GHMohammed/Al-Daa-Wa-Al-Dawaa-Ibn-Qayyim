@@ -77,7 +77,14 @@ class _RecorderSheetState extends ConsumerState<_RecorderSheet> {
     }
     final path = await VoiceNoteStorage.newPath(widget.lessonId);
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
+      // جودة الكلام تكفيها 32 كيلوبت (ربع الافتراضي)، فتبقى الملاحظات صغيرة
+      // ضمن حد النسخ الاحتياطي التلقائي (25 ميغا للتطبيق كله)
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        numChannels: 1,
+        bitRate: 32000,
+        sampleRate: 22050,
+      ),
       path: path,
     );
     _path = path;
