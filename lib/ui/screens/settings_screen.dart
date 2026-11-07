@@ -655,6 +655,38 @@ class _AboutCard extends StatelessWidget {
               ),
             ],
           ),
+          Divider(height: 24, color: Theme.of(context).dividerColor),
+          // صف النسخ الاحتياطي — يطمئن المستخدم أن تقدمه لا يضيع
+          // (النسخ التلقائي في أندرويد، انظر docs/auto-backup-plan.md)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _IconBox(icon: Icons.cloud_done_outlined, size: 36),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'النسخ الاحتياطي',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'يُحفظ تقدمك وعلاماتك وملاحظاتك تلقائياً في نسخة هاتفك '
+                      'الاحتياطية على حساب Google، وتعود عند إعادة التثبيت '
+                      'أو على هاتف جديد.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: mutedColor,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           // الفاصل من الثيم
           Divider(height: 24, color: Theme.of(context).dividerColor),
           // صف المطور — قابل للنقر لفتح الموقع
