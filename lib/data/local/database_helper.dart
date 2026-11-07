@@ -36,6 +36,7 @@ class DatabaseHelper {
   static Future<void> onCreate(Database db, int version) async {
     await _createV1(db);
     await _createV2(db);
+    await _createV3(db);
   }
 
   /// ترقية تطبيق موجود: ننفّذ فقط ما ينقصه دون المساس ببيانات المستخدم
@@ -46,6 +47,17 @@ class DatabaseHelper {
     int newVersion,
   ) async {
     if (oldVersion < 2) await _createV2(db);
+    if (oldVersion < 3) await _createV3(db);
+  }
+
+  /// سجل الاستماع اليومي: ثوانٍ فعلية لكل يوم (YYYY-MM-DD) — للرسم والأيام المتتالية
+  static Future<void> _createV3(Database db) async {
+    await db.execute('''
+      CREATE TABLE ${AppConstants.tableListeningLog} (
+        day TEXT PRIMARY KEY,
+        seconds INTEGER NOT NULL
+      )
+    ''');
   }
 
   static Future<void> _createV2(Database db) async {
@@ -243,5 +255,29 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  // ── سجل الاستماع ──────────────────────────────────────────────────
+
+  /// يضيف ثوانيَ إلى يوم (بلا UPSERT لأن SQLite في أندرويد القديم لا يدعمه)
+  Future<void> addListening(String day, int seconds) async {
+    if (seconds <= 0) return;
+    final db = await database;
+    final updated = await db.rawUpdate(
+      'UPDATE ${AppConstants.tableListeningLog} SET seconds = seconds + ? WHERE day = ?',
+      [seconds, day],
+    );
+    if (updated == 0) {
+      await db.insert(AppConstants.tableListeningLog, {
+        'day': day,
+        'seconds': seconds,
+      });
+    }
+  }
+
+  Future<Map<String, int>> getListeningLog() async {
+    final db = await database;
+    final rows = await db.query(AppConstants.tableListeningLog);
+    return {for (final r in rows) r['day'] as String: r['seconds'] as int};
   }
 }

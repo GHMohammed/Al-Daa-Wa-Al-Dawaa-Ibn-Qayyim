@@ -9,6 +9,7 @@ import 'package:al_daa_wal_dawaa/data/models/progress_model.dart';
 import 'package:al_daa_wal_dawaa/data/remote/archive_service.dart';
 import 'package:al_daa_wal_dawaa/data/services/app_audio_handler.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/download_provider.dart';
+import 'package:al_daa_wal_dawaa/domain/providers/listening_stats.dart';
 import 'package:al_daa_wal_dawaa/domain/providers/progress_provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,6 +75,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       ..onSkipToPrevious = playPrevious;
     _initListeners();
     _restoreSpeed();
+    _listenTicker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
   static const _speedKey = 'playback_speed';
@@ -91,6 +93,24 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
   late final AppAudioHandler _handler;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlaybackState>? _playbackSub;
+
+  /// ثوانٍ استُمع إليها فعلاً (وقت حقيقي) ولم تُحفظ في السجل اليومي بعد
+  Timer? _listenTicker;
+  int _pendingListen = 0;
+
+  void _tick() {
+    // توقف من أي مكان (الإشعار، نهاية الدرس…): نحفظ ما تجمّع
+    if (!_handler.player.playing) return _flushListening();
+    if (++_pendingListen >= 30) _flushListening();
+  }
+
+  void _flushListening() {
+    if (_pendingListen == 0) return;
+    final seconds = _pendingListen;
+    _pendingListen = 0;
+    _ref.read(listeningLogProvider.notifier).add(seconds);
+  }
+
   DateTime _lastSave = DateTime.now();
 
   void _initListeners() {
@@ -200,6 +220,7 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
 
   Future<void> pause() async {
     await _handler.pause();
+    _flushListening();
     await _saveCurrentProgress();
     state = state.copyWith(status: PlayerStatus.paused);
   }
@@ -260,6 +281,8 @@ class PlayerNotifier extends StateNotifier<PlayerState> {
       ..onSkipToPrevious = null;
     _positionSub?.cancel();
     _playbackSub?.cancel();
+    _listenTicker?.cancel();
+    _flushListening();
     _saveCurrentProgress();
     super.dispose();
   }

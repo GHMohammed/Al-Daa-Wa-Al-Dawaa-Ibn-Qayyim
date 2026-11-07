@@ -25,13 +25,14 @@ class AppConstants {
 
   static const String dbName = 'al_daa_wal_dawaa.db';
 
-  /// v1: progress, downloads — v2: bookmarks, notes
-  static const int dbVersion = 2;
+  /// v1: progress, downloads — v2: bookmarks, notes — v3: listening_log
+  static const int dbVersion = 3;
 
   static const String tableProgress = 'progress';
   static const String tableDownloads = 'downloads';
   static const String tableBookmarks = 'bookmarks';
   static const String tableNotes = 'notes';
+  static const String tableListeningLog = 'listening_log';
 
   static const String androidNotificationChannelId =
       'com.example.al_daa_wal_dawaa.audio';
