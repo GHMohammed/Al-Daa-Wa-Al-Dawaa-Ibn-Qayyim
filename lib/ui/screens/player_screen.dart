@@ -216,9 +216,6 @@ class _Cover extends StatelessWidget {
 
   final int number;
 
-  static String _arabicDigits(int n) =>
-      n.toString().split('').map((d) => '٠١٢٣٤٥٦٧٨٩'[int.parse(d)]).join();
-
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -249,7 +246,7 @@ class _Cover extends StatelessWidget {
               border: Border.all(color: colors.gold, width: 1.5),
             ),
             child: Text(
-              _arabicDigits(number),
+              '$number',
               style: TextStyle(
                 color: colors.gold,
                 fontSize: number > 9 ? 30 : 34,
