@@ -43,6 +43,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   sqflite_common_ffi: ^2.3.4
+  # sqlite3 (يجلبه sqflite_common_ffi للاختبارات والويب) من 3.x يضمّ
+  # libsqlite3.so (~5 ميغا) في APK، مع أن sqflite على أندرويد يستخدم SQLite النظام
+  sqlite3: ">=2.9.4 <3.0.0"
   flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
