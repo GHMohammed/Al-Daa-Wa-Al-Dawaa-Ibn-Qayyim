@@ -7,6 +7,9 @@ import 'package:path_provider/path_provider.dart';
 class VoiceNoteStorage {
   VoiceNoteStorage._();
 
+  /// مجلد الملاحظات الصوتية (يُنشأ إن لم يوجد) — للنسخ الاحتياطي أيضاً
+  static Future<Directory> directory() => _dir();
+
   static Future<Directory> _dir() async {
     final docs = await getApplicationDocumentsDirectory();
     final dir = Directory(p.join(docs.path, 'voice_notes'));
