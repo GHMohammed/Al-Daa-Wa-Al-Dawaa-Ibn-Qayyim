@@ -42,6 +42,9 @@ Future<void> showBookmarkLabelDialog(
   WidgetRef ref,
   BookmarkModel bookmark,
 ) async {
+  // يُقرأ قبل فتح النافذة: ظهور لوحة المفاتيح قد يعيد بناء الأداة التي
+  // استدعتنا فيبطل ref قبل الحفظ
+  final notifier = ref.read(annotationsProvider.notifier);
   final controller = TextEditingController(text: bookmark.label);
   final label = await showDialog<String>(
     context: context,
@@ -68,9 +71,7 @@ Future<void> showBookmarkLabelDialog(
     ),
   );
   if (label == null || bookmark.id == null) return;
-  await ref
-      .read(annotationsProvider.notifier)
-      .renameBookmark(bookmark.id!, label);
+  await notifier.renameBookmark(bookmark.id!, label);
 }
 
 /// محرّر ملاحظة: جديدة عند موضع، أو تعديل ملاحظة موجودة
@@ -81,6 +82,10 @@ Future<void> showNoteEditor(
   required Duration position,
   NoteModel? existing,
 }) async {
+  // يُقرأ قبل فتح اللوحة: ظهور لوحة المفاتيح يعيد بناء أدوات المشغّل
+  // فيبطل ref قبل الحفظ وتضيع الملاحظة
+  final notifier = ref.read(annotationsProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
   final controller = TextEditingController(text: existing?.text);
   final seconds = existing?.position ?? position.inSeconds;
   final text = await showModalBottomSheet<String>(
@@ -131,11 +136,15 @@ Future<void> showNoteEditor(
     ),
   );
   if (text == null || text.trim().isEmpty) return;
-  final notifier = ref.read(annotationsProvider.notifier);
   if (existing?.id != null) {
     await notifier.editNote(existing!.id!, text);
   } else {
     await notifier.addNote(lessonId, Duration(seconds: seconds), text);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text('حُفظت الملاحظة عند ${_at(seconds)}')),
+      );
   }
 }
 

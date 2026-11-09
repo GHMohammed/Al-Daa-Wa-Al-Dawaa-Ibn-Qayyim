@@ -225,10 +225,16 @@ class _Stat extends StatelessWidget {
   }
 }
 
-/// أعمدة دقائق الاستماع لآخر 7 أيام — الأقدم يميناً واليوم يساراً بالذهبي
-class _WeekCard extends ConsumerWidget {
+/// أعمدة دقائق الاستماع لآخر 7 أيام — الأقدم يميناً واليوم يساراً بالذهبي.
+/// الضغط على عمود يعرض استماع ذلك اليوم مكان مجموع الأسبوع، وضغطه ثانيةً يعيده
+class _WeekCard extends ConsumerStatefulWidget {
   const _WeekCard();
 
+  @override
+  ConsumerState<_WeekCard> createState() => _WeekCardState();
+}
+
+class _WeekCardState extends ConsumerState<_WeekCard> {
   /// الحرف الأول من اسم اليوم حسب DateTime.weekday (1 = الاثنين)
   static const _initials = {
     1: 'ن',
@@ -240,11 +246,23 @@ class _WeekCard extends ConsumerWidget {
     7: 'ح',
   };
 
+  static const _names = {
+    1: 'الاثنين',
+    2: 'الثلاثاء',
+    3: 'الأربعاء',
+    4: 'الخميس',
+    5: 'الجمعة',
+    6: 'السبت',
+    7: 'الأحد',
+  };
+
   static const _barArea = 72.0;
   static const _minScaleSeconds = 15 * 60;
 
+  int? _selected;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final week = ref.watch(weekListeningProvider);
     final colors = context.colors;
     final text = Theme.of(context).textTheme;
@@ -254,6 +272,8 @@ class _WeekCard extends ConsumerWidget {
       _minScaleSeconds,
       (m, d) => d.seconds > m ? d.seconds : m,
     );
+    final selected =
+        _selected != null && _selected! < week.length ? _selected : null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -269,11 +289,22 @@ class _WeekCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Text('هذا الأسبوع', style: text.titleSmall),
+                  Text(
+                    selected == null
+                        ? 'هذا الأسبوع'
+                        : _dayLabel(selected, week.length, week[selected].day),
+                    style: text.titleSmall,
+                  ),
                   const Spacer(),
                   Text(
-                    _formatTotal(totalSeconds),
-                    style: text.labelMedium?.copyWith(color: colors.textMuted),
+                    selected == null
+                        ? _formatTotal(totalSeconds)
+                        : week[selected].seconds == 0
+                            ? 'لا استماع'
+                            : _formatTotal(week[selected].seconds),
+                    style: text.labelMedium?.copyWith(
+                      color: selected == null ? colors.textMuted : colors.brand,
+                    ),
                   ),
                 ],
               ),
@@ -283,39 +314,19 @@ class _WeekCard extends ConsumerWidget {
                 children: [
                   for (var i = 0; i < week.length; i++)
                     Expanded(
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: _barArea,
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Container(
-                                width: 14,
-                                // عمود صغير حتى لليوم الفارغ ليبقى الشكل مقروءاً
-                                height: (week[i].seconds / scale * _barArea)
-                                    .clamp(3.0, _barArea),
-                                decoration: BoxDecoration(
-                                  color: i == week.length - 1
-                                      ? colors.gold
-                                      : week[i].seconds > 0
-                                          ? colors.accent
-                                          : colors.track,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.sm / 2),
-                                ),
-                              ),
-                            ),
+                      child: Semantics(
+                        button: true,
+                        selected: i == selected,
+                        label: '${_dayLabel(i, week.length, week[i].day)}: '
+                            '${week[i].seconds == 0 ? 'لا استماع' : _formatTotal(week[i].seconds)}',
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => setState(
+                            () => _selected = i == selected ? null : i,
                           ),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            _initials[week[i].day.weekday]!,
-                            style: text.labelSmall?.copyWith(
-                              color: i == week.length - 1
-                                  ? colors.brand
-                                  : colors.textMuted,
-                            ),
-                          ),
-                        ],
+                          child: _bar(context, week, i, selected, scale),
+                        ),
                       ),
                     ),
                 ],
@@ -325,6 +336,63 @@ class _WeekCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _bar(
+    BuildContext context,
+    List<({DateTime day, int seconds})> week,
+    int i,
+    int? selected,
+    int scale,
+  ) {
+    final colors = context.colors;
+    final text = Theme.of(context).textTheme;
+    final isToday = i == week.length - 1;
+    final isSelected = i == selected;
+    // عند اختيار يوم تخفت بقية الأعمدة ليبرز المختار
+    final dimmed = selected != null && !isSelected;
+    final color = isToday
+        ? colors.gold
+        : week[i].seconds > 0
+            ? colors.accent
+            : colors.track;
+
+    return Column(
+      children: [
+        SizedBox(
+          height: _barArea,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSelected ? 18 : 14,
+              // عمود صغير حتى لليوم الفارغ ليبقى الشكل مقروءاً
+              height: (week[i].seconds / scale * _barArea).clamp(3.0, _barArea),
+              decoration: BoxDecoration(
+                color: dimmed ? color.withValues(alpha: 0.35) : color,
+                borderRadius: BorderRadius.circular(AppRadius.sm / 2),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          _initials[week[i].day.weekday]!,
+          style: text.labelSmall?.copyWith(
+            color: isSelected || (selected == null && isToday)
+                ? colors.brand
+                : colors.textMuted,
+            fontWeight: isSelected ? FontWeight.bold : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _dayLabel(int i, int length, DateTime day) {
+    if (i == length - 1) return 'اليوم';
+    if (i == length - 2) return 'أمس';
+    return _names[day.weekday]!;
   }
 
   static String _formatTotal(int seconds) {

@@ -18,9 +18,11 @@ Future<void> showVoiceRecorder(
   required Duration position,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
+  // يُقرأ قبل فتح اللوحة: قد يُعاد بناء الأداة التي استدعتنا فيبطل ref
+  final player = ref.read(playerProvider.notifier);
   // نوقف الدرس أثناء التسجيل حتى لا يلتقط الميكروفون صوت السماعة
   final wasPlaying = ref.read(playerProvider).status == PlayerStatus.playing;
-  if (wasPlaying) await ref.read(playerProvider.notifier).pause();
+  if (wasPlaying) await player.pause();
   if (!context.mounted) return;
 
   final saved = await showModalBottomSheet<bool>(
@@ -42,7 +44,7 @@ Future<void> showVoiceRecorder(
         ),
       );
   }
-  if (wasPlaying) await ref.read(playerProvider.notifier).resume();
+  if (wasPlaying) await player.resume();
 }
 
 enum _Stage { ready, recording, recorded, denied }
